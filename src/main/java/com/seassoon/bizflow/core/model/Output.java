@@ -4,6 +4,7 @@ import com.seassoon.bizflow.core.model.extra.ExtraInfo;
 import com.seassoon.bizflow.core.model.extra.DocumentKV;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.model.project.Project;
+import com.seassoon.bizflow.core.model.rule.Approval;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -26,7 +27,10 @@ public class Output {
     private Project projectInfo;
     private Integer approvalStage;
     private DocumentClassify documentClassify;
-    private DocumentKVInfo documentKvInfo;
+    private House<DocumentKV> documentKvInfo;
+    private House<Approval> ruleOutputData;
+    private String ocrType;
+    private Integer timeCost;
 
     @Data
     @EqualsAndHashCode
@@ -36,14 +40,13 @@ public class Output {
 
     @Data
     @EqualsAndHashCode
-    public static class DocumentKVInfo {
+    public static class House<T> {
+        private Room<T> resultList = new Room<>();
+    }
 
-        private Result resultList;
-
-        @Data
-        @EqualsAndHashCode
-        public static class Result {
-            private List<DocumentKV> kvList = new ArrayList<>();
-        }
+    @Data
+    @EqualsAndHashCode
+    public static class Room<T> {
+        private List<T> kvList = new ArrayList<>();
     }
 }
