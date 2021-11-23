@@ -1,0 +1,59 @@
+spring:
+  redis:
+    host: 10.0.96.19
+    port: 30578
+    password: seassoon13579
+    database: 13
+
+logging:
+  pattern:
+    level: "%5p [%X{recordId:-}]"
+
+# # Biz Flow配置项
+biz-flow:
+  redis:
+    host: 10.0.96.19
+    port: 30019
+    password: seassoon13579
+    databases:
+      - 10
+      - 13
+    timeout: 3s
+    queue:
+      TODO: "queue:mustang:todo"
+      OCR_REQUEST: "queue:ocr:request"
+      OCR_RESPONSE: "queue:ocr:response"
+  minio:
+    enabled: true
+    endpoint: "10.0.96.19"
+    port: 30496
+    access-key: minioadmin
+    secret-key: minioadmin
+    url: "http://10.0.96.19:30496"
+    bucket:
+      DEFAULT: "zhengwu"
+  schedule:
+    pool-size: 1
+    thread-name-prefix: "bf-scheduling-"
+    wait-for-task-completed-on-shutdown: true
+    await-termination-seconds: 30
+  local-storage: "${user.dir}/tmp"
+  ocr-type: paddle
+  integration:
+    OCR: "http://10.0.96.19:31111/api/algorithm/extract_text_info"
+    HAND_WRITING_TEXT: "http://10.0.96.19:32593/api/algorithm/extract_handwriting_text_info"
+    DATE_TEXT: "http://10.0.96.19:30689/api/algorithm/extract_date_text_info"
+    SEAL: "http://10.0.103.69:8087/api/algorithm/extract_organization_seal_info"
+    STAMP: "http://10.0.96.19:32156/api/algorithm/extract_stamp_info"
+    CHECK_BOX: "http://10.0.96.19:30132/api/algorithm/extract_checkbox_info"
+    ID_CARD: "http://10.0.96.19:30804/api/algorithm/extract_id_card_info"
+    ID_CARD_EXTRACT: "http://10.0.96.19:30623/api/algorithm/extract_id_card_info"
+    ORIENTATION: "http://10.0.96.19:31477/api/algorithm/text_orientation_detection"
+    DRIVER_LICENSE: "http://10.0.96.19:30145/api/algorithm/detect_driving_license"
+    NER: "http://10.0.96.19:30844/api/algorithm/ner"
+    DOC_ELEMENT: "http://10.0.96.19:30517/api/algorithm/detect_docs_elements"
+  algorithm:
+    dot-coincide: 23            # 判断两个点是否重合的像素阈值
+    match-threshold: 0.92       # 字符串模糊匹配阈值
+
+

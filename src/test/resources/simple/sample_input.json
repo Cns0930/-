@@ -1,0 +1,1481 @@
+{
+	"version": "100",   // 版本号100
+	"sid": "115002240093516329400013900600001",	//事项编号
+	"project_id": "chongqing",	//项目id，正确拼音表示，青浦：qingpu
+	"record_id": "14253551183400919060000012",	//办件记录编号，流水号
+	"calc_mode": 3,	//计算模式，1 分类；2 分类-提取；3 分类-提取-规则；4 遇到0分类只分0的分类
+	"image_list": [
+		{
+			"image_id": "1425355121821364227",	//文档唯一编号
+			"image_url": "http://10.0.103.207:10001/jiugong/zjzwfw_16292739351751947155179.jpg",	//文档url
+			"document_name": "重庆市印刷企业报批事项申请表",		//文档名字
+			"document_label": "12323213",	//文档默认分类标签
+			"document_source": 1,	//1表示帮办来源，0表示自备材料
+			"document_page": 1,		//材料页码，默认为0
+			"total_pages": 3,		//材料总页数，默认为0
+			"process_mode": 0		//该材料的计算模式，暂未使用，默认0
+		},
+		{
+			"image_id": "1425355121821364228",
+			"image_url": "http://10.0.103.207:10001/jiugong/zjzwfw_16292740299541620845112.jpg",
+			"document_name": "重庆市印刷企业报批事项申请表",
+			"document_label": "12321344",
+			"document_source": 1,
+			"document_page": 3,
+			"total_pages": 3,
+			"process_mode": 0
+		},
+		{
+			"image_id": "1425355121821364229",
+			"image_url": "http://10.0.103.207:10001/jiugong/zjzwfw_16292740903581580866343.jpg",
+			"document_name": "重庆市印刷企业报批事项申请表",
+			"document_label": "123213888",
+			"document_source": 1,
+			"document_page": 2,
+			"total_pages": 3,
+			"process_mode": 0
+		},
+		{
+			"image_id": "1425355121854918658",
+			"image_url": "http://10.0.103.207:10001/jiugong/zjzwfw_16292741078811535669652.jpg",
+			"document_name": "营业执照副本复印件",
+			"document_label": "123213000",
+			"document_source": 1,
+			"document_page": 1,
+			"total_pages": 1,
+			"process_mode": 0
+		},
+		{
+			"image_id": "1425355121854918659",
+			"image_url": "http://10.0.103.207:10001/jiugong/zjzwfw_1629274128731910121171.jpg",
+			"document_name": "营业执照副本复印件",
+			"document_label": "123210087",
+			"document_source": 1,
+			"document_page": 1,
+			"total_pages": 1,
+			"process_mode": 0
+		}
+	],
+	"extra_info": {
+		"ai_subkey_recognition_flag": 0,	//是否涉及到变更或者子项识别 ，0表示无需AI进行子项识别，1表示需要AI进行子项识别
+		"subkey_set": [],		//变更内容，来源有两个（1）Java（2）alg提取识别
+		"extra_kv_info": [{
+				"source": "cjbb",   // 结构化数据来源， cjbb：超级帮办，cert：电子证照
+				"document_list": [
+					{
+						"image_id": "",		//这里固定是空的
+						"document_label": "-999",   // 材料类型编号
+						"field_val": [
+							{
+								"key": "经办人姓名", // 结构化数的key
+								"val": [             // 结构化数的value
+									"测试王"
+								]
+							}
+						]
+					}
+				]
+			}]
+	},
+	"api_info": {	//存放ocr和分类两个接口的输出，内部结构透明
+		"ocr_output": [     // ocr接口的输出，默认[]
+			{
+				"image_name": "1425355121821364227",
+				"corr_url": "http://10.0.103.89:9207/jg/202108/16/etRMx5yUgZYmg9QI2CYdKUwwtaIqlzOn_1425355121821364227.jpg",
+				"ocr_result": {},
+				"ocr_result_without_line_merge": {}
+			}
+		],
+		"sort_output": [        // 分类接口的输出，默认[]
+			{
+				"image_id": "1425355121821364227",
+				"image_url": "http://10.0.103.141:9889/base64upload/jpg/20210811/16286660485397373.jpg",
+				"document_name": "报批事项申请表",
+				"document_label": "123393",
+				"document_source": 1,
+				"document_page": 1,
+				"total_pages": 3
+			}
+		]
+	},
+	"config": {
+		"checkpointConfig": [	//提取点配置
+			{
+				"form_typeid": "123393",	//材料类别编号
+				"multi_page": true,			//是否多页
+				"extract_point": [
+					{
+						"sort_property": "WHO",					//4W分类
+						"display_property": null,				//4W分类的展示
+						"value_type": "string",					//是否为截图
+						"line_merge": null,						//ocr结果行合并
+						"key_value_relative_position": "right",	//key-value的相对位置
+						"text_string_pattern_range": "line",	//文本正则表达式作用域
+						"init_position": null,					//截图初始位置
+						"value_property": null,					//value属性
+						"value_field": null,					//value的字段
+						"value_pattern": [						//提取表达式
+							"(重庆.*公司)",
+							"企业名称(.*)"
+						],
+						"sign_seal_id": null,					/**截图信息。
+																1：是否签字，
+																2：是否盖章，
+																3：是否填写日期，
+																4：是否粘贴身份证，
+																5：提取身份证姓名，
+																6：提取身份证有效期，
+																7：是否已填写，
+																8：提取身份证住址，
+																9：提取身份证功公民身份号码，
+																10：提取身份证性别，
+																11：提取身份证民族，
+																12：提取身份证出生，
+																13：是否勾选，
+																14：是否盖章，
+																15：勾选内容左或者右，
+																16：是否粘贴证件照片，
+																17：是否盖红章，
+																18：打印或手写，
+																19：NER**/
+						"document_field": "企业名称",			//提取点名称
+						"alias": [								//提取点名称的别名
+							"企业名称"
+						],
+						"page": 1,								//页码
+						"value_environment": "text",			//值的环境（图或文本）
+						"cut_img_tag": null,					//截图表达式
+						"source": "cjbb",						//默认为”smj“表示扫描件提取得到；"cjbb"表示超级帮办数据；"cert"表示电子证照数据；
+						"action": 2,							//1表示需要算法提取；2表示已经有了结构化数据，不需提取；默认为3 表示该提取点不入规则，不需提取；
+						"value": {
+							//默认为"" ；若有结构化数据，则替换为对应的value；
+							"value": "xxxx"
+						}
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "企业类型",
+						"alias": [
+							"企业类型"
+						],
+						"page": 2,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "cjbb",
+						"action": 2,
+						"value": "有限责任公司(自然人投资或控股)"
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "地址",
+						"alias": [
+							"地址"
+						],
+						"page": 2,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "cjbb",
+						"action": 2,
+						"value": "中国（上海）自由贸易试验区美桂北路317号2幢一层107室"
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "法定代表人",
+						"alias": [
+							"法定代表人"
+						],
+						"page": 2,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "cjbb",
+						"action": 2,
+						"value": "测试王"
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "注册资本",
+						"alias": [
+							"注册资本"
+						],
+						"page": 2,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "cjbb",
+						"action": 2,
+						"value": "700"
+					}
+				]
+			},
+			{
+				"form_typeid": "123690",
+				"multi_page": false,
+				"extract_point": [
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "img",
+						"line_merge": null,
+						"key_value_relative_position": "around",
+						"text_string_pattern_range": null,
+						"init_position": [
+							[
+								0,
+								0
+							],
+							[
+								1,
+								1
+							]
+						],
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": "2",
+						"document_field": "盖章",
+						"alias": [
+							"盖章"
+						],
+						"page": -1,
+						"value_environment": "text",
+						"cut_img_tag": [
+							{
+								"method": "regular",
+								"pattern": "人工智能"
+							}
+						],
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "img",
+						"line_merge": null,
+						"key_value_relative_position": "around",
+						"text_string_pattern_range": null,
+						"init_position": [
+							[
+								0.323103,
+								0.673437
+							],
+							[
+								0.761116,
+								0.995312
+							]
+						],
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": "1",
+						"document_field": "签字",
+						"alias": [
+							"签字"
+						],
+						"page": -1,
+						"value_environment": "text",
+						"cut_img_tag": [
+							{
+								"method": "regular",
+								"pattern": "委托人签字"
+							}
+						],
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					}
+				]
+			},
+			{
+				"form_typeid": "123701",
+				"multi_page": false,
+				"extract_point": [
+					{
+						"sort_property": "WHO",
+						"display_property": "类型",
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "营业执照企业类型",
+						"alias": [
+							"类型"
+						],
+						"page": -1,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": "住所",
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "营业执照住所",
+						"alias": [
+							"住所"
+						],
+						"page": -1,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": "名称",
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "营业执照名称",
+						"alias": [
+							"名称"
+						],
+						"page": -1,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": "营业期限",
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "营业执照有效期",
+						"alias": [
+							"营业期限"
+						],
+						"page": -1,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": "法定代表人",
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "营业执照法人",
+						"alias": [
+							"法定代表人"
+						],
+						"page": -1,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": "注册资本",
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "营业执照注册资本",
+						"alias": [
+							"注册资本"
+						],
+						"page": -1,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "img",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": [
+							[
+								0.611963,
+								0.721875
+							],
+							[
+								1,
+								1
+							]
+						],
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": "2",
+						"document_field": "营业执照监管局盖章",
+						"alias": [
+							"营业执照监管局盖章"
+						],
+						"page": -1,
+						"value_environment": "text",
+						"cut_img_tag": [
+							{
+								"method": "regular",
+								"pattern": "登记机关"
+							}
+						],
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					}
+				]
+			},
+			{
+				"form_typeid": "123705",
+				"multi_page": true,
+				"extract_point": [
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "房产地址",
+						"alias": [
+							"房产地址"
+						],
+						"page": 2,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": null,
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": null,
+						"sign_seal_id": null,
+						"document_field": "权利人",
+						"alias": [
+							"权利人"
+						],
+						"page": 2,
+						"value_environment": "table",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					}
+				]
+			},
+			{
+				"form_typeid": "123706",
+				"multi_page": false,
+				"extract_point": [
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": "line",
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": [
+							"购纳税人识别号称(.*)密",
+							"买纳税人识别号称(.*)密",
+							"购名纳税人识别号称(.*)密",
+							"购名称(.*)密"
+						],
+						"sign_seal_id": null,
+						"document_field": "发票企业名称",
+						"alias": [
+							"发票企业名称"
+						],
+						"page": -1,
+						"value_environment": "text",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					}
+				]
+			},
+			{
+				"form_typeid": "123787",
+				"multi_page": false,
+				"extract_point": [
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": "line",
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": [
+							"企业名称[:：]{0,1}(.*)"
+						],
+						"sign_seal_id": null,
+						"document_field": "房屋租赁乙方",
+						"alias": [
+							"以下称乙方@企业名称"
+						],
+						"page": -1,
+						"value_environment": "text",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": "context",
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": [
+							"坐落于(.*)建筑面积"
+						],
+						"sign_seal_id": null,
+						"document_field": "房屋租赁地址",
+						"alias": [
+							"房屋租赁地址"
+						],
+						"page": -1,
+						"value_environment": "text",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					},
+					{
+						"sort_property": "WHO",
+						"display_property": null,
+						"value_type": "string",
+						"line_merge": null,
+						"key_value_relative_position": "right",
+						"text_string_pattern_range": "line",
+						"init_position": null,
+						"value_property": null,
+						"value_field": null,
+						"value_pattern": [
+							"自(.*至.*)止"
+						],
+						"sign_seal_id": null,
+						"document_field": "房屋租赁有效期",
+						"alias": [
+							"房屋租赁有效期"
+						],
+						"page": -1,
+						"value_environment": "text",
+						"cut_img_tag": null,
+						"source": "smj",
+						"action": 1,
+						"value": ""
+					}
+				]
+			}
+		],
+		"sortConfig": {										//分类配置
+			"sid": "115002240093516329400013900600001",		//事项id
+			"typeid2doc": {									//材料id和材料名的对应关系
+				"123456789": "营业执照副本复印件",
+				"12323213": "材料1",
+				"12321344": "材料2",
+				"123213888": "材料3",
+				"123213000": "材料4",
+				"123210087": "材料5"
+			},
+			"typeid2field": {						//材料对应的分类pattern
+				"123456789": [						//材料id
+					[
+						{	//主关键字
+							"method": "regular",	//匹配方法，可取值： regular - 按正则匹配； similar - 按相似度匹配；
+							"pattern": [			//匹配表达式
+								"营业执照#4"			//多个值之间是或的关系
+							],
+							"except": [],			//排除关键字
+							"page": 1,				//页码
+							"total_pages": 3
+						},							//多个关键字之间是与的关系
+						{	//辅助关键字
+							"method": "regular",
+							"pattern": [
+								"住所",
+								"经营范围#4"
+							],
+							"except": [],
+							"page": 1,
+							"total_pages": 3
+						}
+					] //如果主关键字或者辅助关键字里面同时有regular和similar，就会拆分成多套主辅关键字，之间是或的关系
+				],
+				"12323213": [
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"营业执照#4"
+							],
+							"except": [],
+							"page": 1,
+							"total_pages": 3
+						},
+						{
+							"method": "regular",
+							"pattern": [
+								"住所",
+								"经营范围#4"
+							],
+							"except": [],
+							"page": 1,
+							"total_pages": 3
+						}
+					]
+				],
+				"12321344": [
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"营业执照#4"
+							],
+							"except": [],
+							"page": 1,
+							"total_pages": 3
+						},
+						{
+							"method": "regular",
+							"pattern": [
+								"住所",
+								"经营范围#4"
+							],
+							"except": [],
+							"page": 1,
+							"total_pages": 3
+						}
+					]
+				],
+				"123213888": [
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"营业执照#4"
+							],
+							"except": [],
+							"page": 1,
+							"total_pages": 3
+						},
+						{
+							"method": "regular",
+							"pattern": [
+								"住所",
+								"经营范围#4"
+							],
+							"except": [],
+							"page": 1,
+							"total_pages": 3
+						}
+					]
+				],
+				"123213000": [
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"章程修正案的签字页##"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{公司股东会决议}",
+								"{公司法}",
+								"{通过章程修正案}",
+								"{章程其他条款不变}"
+							],
+							"page": -1,
+							"total_pages": -1
+						},
+						{
+							"method": "regular",
+							"pattern": [
+								"股东签字或盖章##",
+								"日期",
+								"股东盖章签字##",
+								"法定代表人签字##",
+								"股东签字盖章#6"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{公司股东会决议}",
+								"{公司法}",
+								"{通过章程修正案}",
+								"{章程其他条款不变}"
+							],
+							"page": -1,
+							"total_pages": -1
+						}
+					],
+					[
+						{
+							"method": "similar",
+							"pattern": [
+								"章程修正案"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{公司股东会决议}",
+								"{公司法}",
+								"{通过章程修正案}",
+								"{章程其他条款不变}"
+							],
+							"page": -1,
+							"total_pages": -1
+						},
+						{
+							"method": "regular",
+							"pattern": [
+								"股东签字或盖章##",
+								"日期",
+								"股东盖章签字##",
+								"法定代表人签字##",
+								"股东签字盖章#6"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{公司股东会决议}",
+								"{公司法}",
+								"{通过章程修正案}",
+								"{章程其他条款不变}"
+							],
+							"page": -1,
+							"total_pages": -1
+						}
+					],
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"章程修正案##"
+							],
+							"except": [
+								"{公司股东会决议}",
+								"{通过章程修正案}"
+							],
+							"page": -1,
+							"total_pages": -1
+						},
+						{
+							"method": "regular",
+							"pattern": [
+								"此页无内容##",
+								"对章程如下##",
+								"具体修正如下##",
+								"股东签署页##",
+								"对章程.*如下",
+								"本公司章程做如下修改##",
+								"特此修正#4",
+								"作如下修正##",
+								"法定代表人签字##",
+								"法定代表人.*签",
+								"的.*章程.*修正如下",
+								"股东签字盖章#6"
+							],
+							"except": [
+								"{公司股东会决议}",
+								"{通过章程修正案}"
+							],
+							"page": -1,
+							"total_pages": -1
+						}
+					],
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"\\\\A章程修正案",
+								"章程修正案签字页#8"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{股东决定}",
+								"{1019年7月1日}",
+								"{公司股东会决议}",
+								"{通过章程修正案}"
+							],
+							"page": -1,
+							"total_pages": -1
+						}
+					],
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"\\\\A章程修正案",
+								"章程修正案签字页#8"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{股东决定}",
+								"{1019年7月1日}",
+								"{公司股东会决议}",
+								"{通过章程修正案}"
+							],
+							"page": -1,
+							"total_pages": -1
+						},
+						{
+							"method": "similar",
+							"pattern": [
+								""
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{股东决定}",
+								"{1019年7月1日}",
+								"{公司股东会决议}",
+								"{通过章程修正案}"
+							],
+							"page": -1,
+							"total_pages": -1
+						}
+					],
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"章程修正案",
+								"章程修正案##"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{股东决定}",
+								"{通过章程修正案}"
+							],
+							"page": -1,
+							"total_pages": -1
+						},
+						{
+							"method": "regular",
+							"pattern": [
+								"作出如下修改##",
+								"章程其他条款不变#4"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{主持形成决议如下}",
+								"{仅限变更登记填写}",
+								"{件凭证}",
+								"{股东决定}",
+								"{通过章程修正案}"
+							],
+							"page": -1,
+							"total_pages": -1
+						}
+					]
+				],
+				"123210087": [
+					[
+						{
+							"method": "similar",
+							"pattern": [
+								"董事、监事、经理信息##",
+								"董事监事经理信息##"
+							],
+							"except": [],
+							"page": -1,
+							"total_pages": -1
+						}
+					],
+					[
+						{
+							"method": "regular",
+							"pattern": [
+								"董事监事经理信息##",
+								"经理不重复填写##"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{收件凭证}",
+								"{件凭证}"
+							],
+							"page": -1,
+							"total_pages": -1
+						},
+						{
+							"method": "regular",
+							"pattern": [
+								"本人提供用于##"
+							],
+							"except": [
+								"{材料收件凭}",
+								"{收件凭证}",
+								"{件凭证}"
+							],
+							"page": -1,
+							"total_pages": -1
+						}
+					]
+				]
+			}
+		},
+		"mappingConfig": {		//用于指示各类材料提取时使用的提取策略，该配置不需做删选修改；
+			"unified": "info_extract.strategies.UnifiedStrategy_single_page",	//单页
+			"123393": "info_extract.strategies.UnifiedStrategy_multi_page",		//多页
+			"123701": "info_extract.strategies.yingyezhizhao",					//营业执照
+			"123705": "info_extract.strategies.UnifiedStrategy_multi_page"
+		},
+		"subkeyConfig": [	//情形定义
+			{
+				"subkey_name": {
+					 "董事": {	//具体的情形定义
+                		"additional_parameter": "[\"董事|区董事|Z董事\"]",	//匹配表达式
+                		"input": "[{\"材料编号\":\"1\",\"字段名\":\"事项\"}]",	//匹配的关键字所属的材料和字段
+                		"judgment_way": "字符串比较"							//匹配类型
+					 },
+            		"股东/股权": {
+                		"additional_parameter": "[\"股东|股权|变更股东|变更股权|股权转让|股东变更|股权变更|公司股东|股东股权|股份|股东及股权\"]",
+                		"input": "[{\"材料编号\":\"1\",\"字段名\":\"变更事项\"}]",
+                		"judgment_way": "字符串比较"
+            		}
+				},
+				"sid": "115002240093516329400013900600001"
+			}
+		],
+		"ruleConfig": [
+			{
+				"rule_pk_id": 87043,		//规则id
+				"row_index": 0,				//行号（新API不需要）
+				"sid": "115002240093516329400013900600001",//审批事项编号（新API不需要）
+				"sname": "单位内部设立印刷厂登记",		//审批事项（新API不需要）
+				"rule_id": "1",					//规则编号
+				"rule_triger": "",				//触发条件
+				"rule_change": "",				//变更情形（新API不需要）
+				"rule_point": "营业执照名称_企业名称",	//规则点
+				"rule_tips": "[\"营业执照中企业名称和申请表内企业名称一致\",\"营业执照中企业名称和申请表内企业名称需要一致@建议查看申请表填写是否错误\",\"置信度低，需人工判断营业执照中企业名称和申请表内企业名称是否一致\"]",	//提示信息
+				"rule_tips_for_user": "[]",	//给办事人的提示信息
+				"rule_desc": "营业执照中企业名称和申请表内企业名称需要一致",	//描述
+				"rule_inputs": "[{\"材料编号\":\"123701\",\"字段名\":\"营业执照名称\"},{\"材料编号\":\"123393\",\"字段名\":\"企业名称\"}]",	//输入的审批点
+				"rule_type": "完全一致",	//判断方式
+				"rule_args": "[]",		//附加参数
+				"rule_law": "[]",		//依据
+				"process": "2",			//处理阶段
+				"show_field": ""		//提示语输入
+			},
+			{
+				"rule_pk_id": 87044,
+				"row_index": 1,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "2",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "营业执照住所_企业地址",
+				"rule_tips": "[\"营业执照中住所和申请表内企业地址一致\",\"营业执照中住所和申请表内企业地址需要一致@建议检查申请表中地址是否填写有误\",\"置信度低，需人工判断营业执照中住所和申请表内企业地址是否一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "",
+				"rule_inputs": "[{\"材料编号\":\"123393\",\"字段名\":\"地址\"},{\"材料编号\":\"123701\",\"字段名\":\"营业执照住所\"}]",
+				"rule_type": "字符串1包含字符串2",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87045,
+				"row_index": 2,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "3",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "营业执照类型_企业类型",
+				"rule_tips": "[\"营业执照中企业类型和申请表内企业类型一致\",\"营业执照中企业类型和申请表内企业类型需要一致@建议查看申请表内企业类型是否填写有误\",\"置信度低，需人工判断营业执照中企业类型和申请表内企业类型是否一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "",
+				"rule_inputs": "[{\"材料编号\":\"123701\",\"字段名\":\"营业执照企业类型\"},{\"材料编号\":\"123393\",\"字段名\":\"企业类型\"}]",
+				"rule_type": "完全一致",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87046,
+				"row_index": 3,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "4",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "发票购买方名称_企业名称",
+				"rule_tips": "[\"发票购买方企业名称和申请表内企业名称一致\",\"发票购买方企业名称和申请表内企业名称需要一致@建议查看申请表内企业名称是否填写有误\",\"置信度低，需人工判断发票购买方企业名称和申请表内企业名称是否一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "",
+				"rule_inputs": "[{\"材料编号\":\"123706\",\"字段名\":\"发票企业名称\"},{\"材料编号\":\"123393\",\"字段名\":\"企业名称\"}]",
+				"rule_type": "完全一致",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87047,
+				"row_index": 4,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "5b",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "不动产证明权利人_法人名称",
+				"rule_tips": "[]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "不动产证明中权利人需要与法人名称一致",
+				"rule_inputs": "[{\"材料编号\":\"123705\",\"字段名\":\"权利人\"},{\"材料编号\":\"123393\",\"字段名\":\"法定代表人\"}]",
+				"rule_type": "完全一致",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87048,
+				"row_index": 5,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "5a",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "不动产证明权利人_申请表公司名",
+				"rule_tips": "[]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "不动产证明中权利人需要与申请表中公司名一致",
+				"rule_inputs": "[{\"材料编号\":\"123705\",\"字段名\":\"权利人\"},{\"材料编号\":\"123393\",\"字段名\":\"企业名称\"}]",
+				"rule_type": "完全一致",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87049,
+				"row_index": 6,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "5",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "不动产权利人_公司名称(法人)",
+				"rule_tips": "[\"不动产证明中权利人与申请表中公司名一致或法人名称一致\",\"不动产证明中权利人需要与申请表中公司名一致或法人名称一致@建议查看权利人内容，并对比申请表公司名或法人姓名\",\"置信度低，需人工判断不动产证明中权利人是否与申请表中公司名一致或法人名称一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "不动产证明中权利人需要与申请表中公司名一致或法人名称一致",
+				"rule_inputs": "[]",
+				"rule_type": "多规则或",
+				"rule_args": "[\"5a\",\"5b\"]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87050,
+				"row_index": 7,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "6",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "不动产证明坐落_申请表地址",
+				"rule_tips": "[\"不动产证明中坐落（地址）与申请表中地址一致\",\"不动产证明中坐落（地址）需要与申请表中地址一致@建议检查申请表中企业地址是否填写有误\",\"置信度低，需人工判断不动产证明中坐落（地址）与申请表中地址是否一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "不动产证明中坐落（地址）需要与申请表中地址一致",
+				"rule_inputs": "[{\"材料编号\":\"123393\",\"字段名\":\"地址\"},{\"材料编号\":\"123705\",\"字段名\":\"房产地址\"}]",
+				"rule_type": "字符串1包含字符串2",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87051,
+				"row_index": 8,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "7b",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "租赁乙方_法人",
+				"rule_tips": "[]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "租赁合同乙方需要与法人一致",
+				"rule_inputs": "[{\"材料编号\":\"123787\",\"字段名\":\"房屋租赁乙方\"},{\"材料编号\":\"123393\",\"字段名\":\"法定代表人\"}]",
+				"rule_type": "完全一致",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "1",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87052,
+				"row_index": 9,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "7a",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "租赁乙方_企业名称",
+				"rule_tips": "[]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "租赁合同中乙方需要与申请表中企业名称一致",
+				"rule_inputs": "[{\"材料编号\":\"123787\",\"字段名\":\"房屋租赁乙方\"},{\"材料编号\":\"123393\",\"字段名\":\"企业名称\"}]",
+				"rule_type": "完全一致",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "1",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87053,
+				"row_index": 10,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "7",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "租赁乙方_企业名称(法人)",
+				"rule_tips": "[\"租赁合同中乙方与申请表中企业名称一致或与法人名称一致\",\"租赁合同中乙方需要与申请表中企业名称一致或与法人名称一致@建议查看合同乙方名称，并对比申请表中企业名称或法人名称\",\"置信度低，需人工判断租赁合同中乙方是否与申请表中企业名称一致或与法人名称一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "租赁合同中乙方需要与申请表中企业名称一致或与法人名称一致",
+				"rule_inputs": "[]",
+				"rule_type": "多规则或",
+				"rule_args": "[\"7a\",\"7b\"]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87054,
+				"row_index": 11,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "8",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "租赁地址_申请表地址",
+				"rule_tips": "[\"租赁合同中租赁的房屋地址与申请表中企业的地址一致\",\"租赁合同中租赁的房屋地址需要与申请表中企业的地址一致@建议检查申请表中企业地址是否填写有误\",\"置信度低，需人工判断租赁合同中租赁的房屋地址与申请表中企业的地址是否一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "租赁合同中租赁的房屋地址需要与申请表中企业的地址一致",
+				"rule_inputs": "[{\"材料编号\":\"123393\",\"字段名\":\"地址\"},{\"材料编号\":\"123787\",\"字段名\":\"房屋租赁地址\"}]",
+				"rule_type": "字符串1包含字符串2",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87055,
+				"row_index": 12,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "9",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "租赁有效期",
+				"rule_tips": "[\"租赁合同在有效期限内\",\"租赁合同中租赁的有效期限已过@请使用有效的租赁合同\",\"置信度低，需人工判断租赁合同中租赁的有效期限是否已过\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "租赁合同中租赁的有效期限需要判断是否过期",
+				"rule_inputs": "[{\"材料编号\":\"123787\",\"字段名\":\"房屋租赁有效期\"}]",
+				"rule_type": "日期在有效期限内",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87056,
+				"row_index": 13,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "10",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "法人身份证有效期",
+				"rule_tips": "[\"法定代表人身份证在有效期内\",\"法定代表人身份证需要在有效期内@请打印有效的身份证件\",\"置信度低，需人工判断法定代表人身份证是否在有效期内\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "法定代表人身份证需要判断是否在有效期内",
+				"rule_inputs": "[{\"材料编号\":\"123704\",\"字段名\":\"有效期\"}]",
+				"rule_type": "身份证在有效期内",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87057,
+				"row_index": 14,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "11",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "营业执照监管局盖章",
+				"rule_tips": "[\"营业执照中已盖市场监管局公章\",\"营业执照中需要盖市场监管局公章@营业执照需要盖市场监管局公章\",\"置信度低，需人工判断营业执照中是否盖市场监管局公章\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "营业执照中需要盖市场监管局公章",
+				"rule_inputs": "[{\"材料编号\":\"123701\",\"字段名\":\"营业执照监管局盖章\"}]",
+				"rule_type": "字符串比较",
+				"rule_args": "[\"contains\",\"已盖章\"]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87058,
+				"row_index": 15,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "12",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "营业执照法人_申请表法人",
+				"rule_tips": "[\"营业执照中法定代表人与申请表法定代表人一致\",\"营业执照中法定代表人需要与申请表法定代表人一致@建议查看申请表内法人是否填写有误\",\"置信度低，需人工判断营业执照中法定代表人是否与申请表法定代表人一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "营业执照中法定代表人需要与申请表法定代表人一致",
+				"rule_inputs": "[{\"材料编号\":\"123701\",\"字段名\":\"营业执照法人\"},{\"材料编号\":\"123393\",\"字段名\":\"法定代表人\"}]",
+				"rule_type": "完全一致",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87059,
+				"row_index": 16,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "13",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "营业执照注册资本_申请表注册资本",
+				"rule_tips": "[\"营业执照中注册资本与申请表注册资本一致\",\"营业执照中注册资本需要与申请表注册资本一致@建议查看申请表中注册资本是否填写有误\",\"置信度低，需人工判断营业执照中注册资本与申请表注册资本是否一致\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "营业执照中注册资本需要与申请表注册资本一致",
+				"rule_inputs": "[{\"材料编号\":\"123701\",\"字段名\":\"营业执照注册资本\"},{\"材料编号\":\"123393\",\"字段名\":\"注册资本\"}]",
+				"rule_type": "数字完全一致",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87060,
+				"row_index": 17,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "14",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "营业执照有效期",
+				"rule_tips": "[\"营业执照在有效期内\",\"营业执照已过期@请使用有效的营业执照\",\"置信度低，需人工判断是否营业执照已过期\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "营业执照有效期需要判断",
+				"rule_inputs": "[{\"材料编号\":\"123701\",\"字段名\":\"营业执照有效期\"}]",
+				"rule_type": "日期在有效期限内",
+				"rule_args": "[]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87061,
+				"row_index": 18,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "15b",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "委托书是否签字",
+				"rule_tips": "[]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "",
+				"rule_inputs": "[{\"材料编号\":\"123690\",\"字段名\":\"签字\"}]",
+				"rule_type": "字符串比较",
+				"rule_args": "[\"contians\",\"已签字\"]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87062,
+				"row_index": 19,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "15a",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "委托书盖章",
+				"rule_tips": "[]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "",
+				"rule_inputs": "[{\"材料编号\":\"123690\",\"字段名\":\"盖章\"}]",
+				"rule_type": "字符串比较",
+				"rule_args": "[\"contains\",\"已盖章\"]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			},
+			{
+				"rule_pk_id": 87063,
+				"row_index": 20,
+				"sid": "115002240093516329400013900600001",
+				"sname": "单位内部设立印刷厂登记",
+				"rule_id": "15",
+				"rule_triger": "",
+				"rule_change": "",
+				"rule_point": "委托书签字或盖章",
+				"rule_tips": "[\"委托书签字或盖章\",\"委托书未盖章且未签字@建议在委托书上盖章或签字\",\"置信度低，需人工判断委托书签字，盖章是否有其一\"]",
+				"rule_tips_for_user": "[]",
+				"rule_desc": "",
+				"rule_inputs": "[]",
+				"rule_type": "多规则或",
+				"rule_args": "[\"15a\",\"15b\"]",
+				"rule_law": "[]",
+				"process": "2",
+				"show_field": ""
+			}
+		],
+		"priorityConfig": {	//当一个材料有多个来源时，以哪个优先
+			"id":"213",
+			"document_label":"SC-F06",	//这个事项的SC-F06这个材料的优先级是电子证照>扫描件>超级帮办 ，默认是 帮办>扫描
+			"sid": "310115-418-03",
+			"remark": "营业执照整本",
+			"source": "电子证照|扫描件|超级帮办"
+		}
+	},
+	"project_info": {
+		"project_sid": "115002240093516329400013900600001"
+	},
+	"approval_stage": 2
+}
