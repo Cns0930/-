@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode
-public class FieldVal {
+public class FieldKV {
     private String key;
     private List<String> val = new ArrayList<>();
 }

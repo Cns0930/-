@@ -14,5 +14,5 @@ import java.util.List;
 public class Document {
     private String imageId;
     private String documentLabel;
-    private List<FieldVal> fieldVal = new ArrayList<>();
+    private List<FieldKV> fieldVal = new ArrayList<>();
 }

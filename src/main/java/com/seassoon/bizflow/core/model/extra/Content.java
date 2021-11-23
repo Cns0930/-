@@ -17,7 +17,7 @@ public class Content {
     private Integer page;
     private String isTrue;
     private String imageOrString;
-    private List<FieldValueInfo> valueInfo = new ArrayList<>();
+    private List<Field> valueInfo = new ArrayList<>();
     private String source;
     private String sortProperty;
     private String displayProperty;

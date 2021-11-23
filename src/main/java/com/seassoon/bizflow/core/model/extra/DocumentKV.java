@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode
-public class KeyValueInfo {
+public class DocumentKV {
     private String documentLabel;
     private List<Content> documentList = new ArrayList<>();
 }

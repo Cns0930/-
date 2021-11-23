@@ -2,11 +2,11 @@ package com.seassoon.bizflow.flow.classify;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
+import com.seassoon.bizflow.core.model.extra.FieldKV;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.model.config.SortConfig;
 import com.seassoon.bizflow.core.model.extra.Document;
 import com.seassoon.bizflow.core.model.extra.ExtraInfo;
-import com.seassoon.bizflow.core.model.extra.FieldVal;
 import com.seassoon.bizflow.core.model.ocr.Block;
 import com.seassoon.bizflow.core.model.ocr.OcrOutput;
 import com.seassoon.bizflow.core.model.ocr.OcrResult;
@@ -196,16 +196,16 @@ public class DefaultDocClassify implements DocClassify {
         }
 
         // 根据结构化数据替换分类配置：辅助字段"x_委托人姓名"替换为"张三"，排除字段"x_委托人姓名"替换为"x_张三"
-        List<FieldVal> xDocFieldVal = xDoc.getFieldVal();
+        List<FieldKV> xDocFieldKV = xDoc.getFieldVal();
         simplifyMap.forEach((key, value) -> value.forEach(field -> {
             // 辅助字段中包含x_开头，将method设置为extra
             if (field.getPattern().stream().anyMatch(str -> str.startsWith("x_"))) {
                 field.setMethod("extra");
 
                 // 替换为结构化数据里的值
-                xDocFieldVal.forEach(fieldVal -> {
-                    field.setPattern(replaceFieldValue(field.getPattern(), fieldVal, str -> str));
-                    field.setExcept(replaceFieldValue(field.getExcept(), fieldVal, str -> "x_" + str));
+                xDocFieldKV.forEach(kv -> {
+                    field.setPattern(replaceFieldValue(field.getPattern(), kv, str -> str));
+                    field.setExcept(replaceFieldValue(field.getExcept(), kv, str -> "x_" + str));
                 });
             }
         }));
@@ -230,17 +230,17 @@ public class DefaultDocClassify implements DocClassify {
      * 替换分类配置中Pattern和Except的辅助字段和排除字段
      *
      * @param fields   pattern或者except值
-     * @param fieldVal 结构化数据-999中的部分
+     * @param fieldKV 结构化数据-999中的部分
      * @param mapper   替换逻辑，由使用者提供实现
      * @return 替换后的pattern或except
      */
-    private List<String> replaceFieldValue(List<String> fields, FieldVal fieldVal, Function<String, String> mapper) {
+    private List<String> replaceFieldValue(List<String> fields, FieldKV fieldKV, Function<String, String> mapper) {
         return fields.stream().map(str -> {
             if (str.startsWith("x_")) {
                 // 将字段名中的x_替换为空白字符，再匹配结构化数据
                 String strField = RegExUtils.replaceAll(str, "x_", "");
-                if (fieldVal.getKey().equals(strField) && CollectionUtil.isNotEmpty(fieldVal.getVal())) {
-                    str = mapper.apply(fieldVal.getVal().get(0));
+                if (fieldKV.getKey().equals(strField) && CollectionUtil.isNotEmpty(fieldKV.getVal())) {
+                    str = mapper.apply(fieldKV.getVal().get(0));
                 }
             }
             return str;

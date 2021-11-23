@@ -1,7 +1,7 @@
 package com.seassoon.bizflow.core.model;
 
 import com.seassoon.bizflow.core.model.extra.ExtraInfo;
-import com.seassoon.bizflow.core.model.extra.KeyValueInfo;
+import com.seassoon.bizflow.core.model.extra.DocumentKV;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.model.project.Project;
 import lombok.Data;
@@ -43,7 +43,7 @@ public class Output {
         @Data
         @EqualsAndHashCode
         public static class Result {
-            private List<KeyValueInfo> kvList = new ArrayList<>();
+            private List<DocumentKV> kvList = new ArrayList<>();
         }
     }
 }
