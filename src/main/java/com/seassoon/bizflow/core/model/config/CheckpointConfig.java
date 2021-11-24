@@ -34,7 +34,7 @@ public class CheckpointConfig {
         private String keyValueRelativePosition;
         private String lineMerge;
         private List<String> valuePattern = new ArrayList<>();
-        private List<com.seassoon.bizflow.core.model.config.ExtractPoint.CutImgTag> cutImgTag = new ArrayList<>();
+        private List<CutImgTag> cutImgTag = new ArrayList<>();
         private List<List<BigDecimal>> initPosition = new ArrayList<>();
         private String textStringPatternRange;
         private List<String> valueField = new ArrayList<>();

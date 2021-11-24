@@ -92,6 +92,9 @@ public class BizFlowProperties {
             /** 待处理事项 */
             TODO,
 
+            /** 处理完成的事项 */
+            FLASH,
+
             /** ocr request */
             OCR_REQUEST,
 

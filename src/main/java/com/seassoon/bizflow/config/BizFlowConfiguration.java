@@ -1,6 +1,8 @@
 package com.seassoon.bizflow.config;
 
 import cn.hutool.core.lang.Assert;
+import com.seassoon.bizflow.core.component.mq.RedisSanctuary;
+import com.seassoon.bizflow.core.component.mq.Sanctuary;
 import com.seassoon.bizflow.core.component.ocr.OcrProcessor;
 import com.seassoon.bizflow.core.component.ocr.PaddleOcrProcessor;
 import com.seassoon.bizflow.core.component.ocr.RedisOcrProcessor;
@@ -52,5 +54,14 @@ public class BizFlowConfiguration {
         processor.setRequestQueue(properties.getRedis().getQueue().get(BizFlowProperties.Redis.Queue.OCR_REQUEST));
         processor.setResponseQueue(properties.getRedis().getQueue().get(BizFlowProperties.Redis.Queue.OCR_RESPONSE));
         return processor;
+    }
+
+    // ---------- Sanctuary ----------
+    @Bean
+    public Sanctuary rdsSanctuary(Map<Integer, StringRedisTemplate> databaseRedisTemplate) {
+        RedisSanctuary sanctuary = new RedisSanctuary();
+        sanctuary.setDatabaseRedisTemplate(databaseRedisTemplate);
+        sanctuary.setTimeout(properties.getRedis().getTimeout());
+        return sanctuary;
     }
 }

@@ -131,20 +131,24 @@ public abstract class AbstractMatcher implements Matcher {
             }
         }
 
+        boolean isMatch = false;
         // 说实话下面这一段代码我也不知道什么意思
         long[] keywordSize = {
                 Math.round(keyword.length() * 0.75),
                 Math.min(Math.round(keyword.length() * 1.25), content.length())
         };
-        final double fThreshold = threshold;
-        return Arrays.stream(keywordSize).anyMatch(size -> {
+        for (long size : keywordSize) {
             long count = content.length() - size + 1;
             Double score = Stream.iterate(0, n -> n + 1)
                     .limit(count)
                     .map(i -> content.substring(i, i + Long.valueOf(size).intValue()))
                     .map(str -> TextUtils.jaroDistance(keyword, str))
                     .max(Double::compareTo).orElse(0.00);
-            return score > fThreshold;
-        });
+            if (score > threshold) {
+                isMatch = true;
+                break;
+            }
+        }
+        return isMatch;
     }
 }

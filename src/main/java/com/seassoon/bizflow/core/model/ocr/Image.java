@@ -1,5 +1,6 @@
 package com.seassoon.bizflow.core.model.ocr;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -21,4 +22,8 @@ public class Image {
     private Integer processMode;
     @JsonProperty("isWithTitle")
     private String isWithTitle;
+
+    // 已分类图片本地保存路径
+    @JsonIgnore
+    private String classifiedPath;
 }

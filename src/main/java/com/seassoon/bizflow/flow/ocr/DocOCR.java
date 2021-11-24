@@ -8,11 +8,9 @@ import com.google.common.collect.Lists;
 import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.component.FileDownloader;
 import com.seassoon.bizflow.core.component.ocr.OcrProcessor;
-import com.seassoon.bizflow.core.model.ocr.Image;
-import com.seassoon.bizflow.core.model.ocr.Block;
-import com.seassoon.bizflow.core.model.ocr.OcrOutput;
-import com.seassoon.bizflow.core.model.ocr.OcrResult;
-import com.seassoon.bizflow.core.model.ocr.Position;
+import com.seassoon.bizflow.core.model.ocr.Character;
+import com.seassoon.bizflow.core.model.ocr.*;
+import com.seassoon.bizflow.core.util.Collections3;
 import com.seassoon.bizflow.core.util.JSONUtils;
 import com.seassoon.bizflow.support.BizFlowContextHolder;
 import org.apache.commons.lang3.tuple.Pair;
@@ -23,7 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -141,11 +139,16 @@ public class DocOCR implements OCR {
     private boolean needMerge(List<Position> a, List<Position> b) {
         // 获取重合像素的阈值
         Integer dotCoincide = properties.getAlgorithm().getDotCoincide();
+
         // 下面这个公式太复杂了，我看不懂
-        return (Math.abs(a.get(0).getY() - b.get(0).getY()) < dotCoincide && Math.abs(a.get(2).getY() - b.get(2).getY()) < dotCoincide) &&
-                Math.abs(((a.get(0).getY() + a.get(2).getY()) / 2) - ((b.get(0).getY() + b.get(2).getY()) / 2)) < dotCoincide &&
-                Math.abs(((b.get(0).getY() + b.get(2).getY()) / 2) - a.get(0).getY()) < dotCoincide / 2 &&
-                Math.abs(((b.get(0).getY() + b.get(2).getY()) / 2) - a.get(2).getY()) < dotCoincide / 2;
+        boolean b1 = Math.abs(a.get(0).getY() - b.get(0).getY()) < dotCoincide;
+        boolean b2 = Math.abs(a.get(2).getY() - b.get(2).getY()) < dotCoincide;
+        boolean b3 = Math.abs(((a.get(0).getY() + a.get(2).getY()) / 2) - ((b.get(0).getY() + b.get(2).getY()) / 2)) < dotCoincide;
+        boolean b4 = Math.abs(((b.get(0).getY() + b.get(2).getY()) / 2) - a.get(0).getY()) < dotCoincide / 2;
+        boolean b5 = Math.abs(((b.get(0).getY() + b.get(2).getY()) / 2) - a.get(2).getY()) < dotCoincide / 2;
+
+        // 下面这个公式太复杂了，我看不懂
+        return (b1 && b2) || b3 || b4 || b5;
     }
 
     /**
@@ -155,19 +158,26 @@ public class DocOCR implements OCR {
      * @return 排序后的 {@link OcrResult}
      */
     private OcrResult sortBlock(OcrResult ocrResult) {
-        //
-        List<Block> orderedBlocks = ocrResult.getBlocks().stream().sorted((a, b) -> {
-            int order = 0;
-            boolean needMerge = needMerge(a.getPosition(), b.getPosition());
-            boolean gtDotCoincide = (a.getPosition().get(0).getX() - b.getPosition().get(0).getX()) > properties.getAlgorithm().getDotCoincide() / 2;
-            if (needMerge && gtDotCoincide) {
-                order = -1;
+        int threshold = properties.getAlgorithm().getDotCoincide();
+        List<Block> blocks = ocrResult.getBlocks();
+        for (int i = 0; i < blocks.size(); i++) {
+            Block a = blocks.get(i);
+            for (int j = 0; j < blocks.size(); j++) {
+                Block b = blocks.get(j);
+                if (j > i) {
+                    boolean needMerge = needMerge(a.getPosition(), b.getPosition());
+                    boolean gtDotCoincide = (a.getPosition().get(0).getX() - b.getPosition().get(0).getX()) > threshold / 2;
+
+                    if (needMerge && gtDotCoincide) {
+                        blocks.set(i, b);
+                        blocks.set(j, a);
+                    }
+                }
             }
-            return order;
-        }).collect(Collectors.toList());
+        }
 
         // 更新排序后的Block
-        ocrResult.setBlocks(orderedBlocks);
+        ocrResult.setBlocks(blocks);
         return ocrResult;
     }
 
@@ -191,49 +201,79 @@ public class DocOCR implements OCR {
         ocrOutput.setImageName(ocrResult.getImageName());
         ocrOutput.setOcrResultWithoutLineMerge(ocrResult);
 
-        // 将两行合并为一行
         List<Block> blocks = ocrResult.getBlocks();
-        // mergedLines表示该行已经合并到上一行
-        List<Block> mergedLines = new ArrayList<>();
+
+        // lineMerged表示该行已经合并到上一行
+        Boolean[] lineMerged = blocks.stream().map(block -> false).toArray(Boolean[]::new);
+
+        // 将两行合并为一行
         for (int i = 0; i < blocks.size(); i++) {
-            Block a = blocks.get(i);
+            Block block = blocks.get(i);
+            if (lineMerged[i]) {
+                continue;
+            }
+            String textA = block.getText();
+            List<Position> positionA = block.getPosition();
+            Double scoreA = block.getScore();
+            List<Character> charactersA = block.getCharacters();
+
             for (int j = 0; j < blocks.size(); j++) {
-                Block b = blocks.get(j);
-                if (a.getPosition().get(0).getX() - b.getPosition().get(0).getX() < 0
-                        && (distance == -1 || (b.getPosition().get(0).getX() - a.getPosition().get(2).getX() <= distance))
-                        && needMerge(a.getPosition(), b.getPosition())) {
-                    Block mergedBlock = merge(a, b);
-                    blocks.set(i, mergedBlock);
-                    mergedLines.add(b);
+                block = blocks.get(j);
+                if (j <= i) {
+                    continue;
+                }
+
+                String textB = block.getText();
+                List<Position> positionB = block.getPosition();
+                Double scoreB = block.getScore();
+                List<Character> charactersB = block.getCharacters();
+
+                if (positionA.get(0).getX() - positionB.get(0).getX() >= 0) {
+                    continue;
+                }
+
+                if (distance != -1 && (positionB.get(0).getX() - positionA.get(2).getX() > distance)) {
+                    continue;
+                }
+
+                if (needMerge(positionA, positionB)) {
+                    lineMerged[j] = true;
+
+                    String text = textA + textB;
+                    Double score = Math.min(scoreA, scoreB);
+                    List<Character> characters = Collections3.merge(charactersA, charactersB);
+
+                    List<Position> position = Lists.newArrayList(
+                            Position.of(positionA.get(0).getX(), Math.min(positionA.get(0).getY(), positionB.get(0).getY())),
+                            Position.of(positionB.get(1).getX(), Math.min(positionA.get(1).getY(), positionB.get(1).getY())),
+                            Position.of(positionB.get(2).getX(), Math.min(positionA.get(2).getY(), positionB.get(2).getY())),
+                            Position.of(positionA.get(3).getX(), Math.min(positionA.get(3).getY(), positionB.get(3).getY()))
+                    );
+
+                    blocks.get(i).setText(text);
+                    blocks.get(i).setScore(score);
+                    blocks.get(i).setCharacters(characters);
+                    blocks.get(i).setPosition(position);
+
+                    textA = text;
+                    positionA = position;
+                    scoreA = score;
+                    charactersA = characters;
                 }
             }
         }
 
         // 删除已合并的行
-        mergedLines.forEach(blocks::remove);
-        ocrResult.setBlocks(blocks);
+        int i = 0;
+        for (Iterator<Block> iterator = blocks.iterator(); iterator.hasNext(); i++) {
+            Block block = iterator.next();
+            if (lineMerged[i]) {
+                iterator.remove();
+            }
+        }
 
+        ocrResult.setBlocks(blocks);
         ocrOutput.setOcrResult(ocrResult);
         return ocrOutput;
-    }
-
-    private Block merge(Block a, Block b) {
-        Block block = new Block();
-
-        block.setText(a.getText() + b.getText());
-        block.setScore(Math.min(a.getScore(), b.getScore()));
-
-        a.getCharacters().addAll(b.getCharacters());
-        block.setCharacters(a.getCharacters());
-
-        List<Position> positions = Lists.newArrayList(
-                Position.of(a.getPosition().get(0).getX(), Math.min(a.getPosition().get(0).getY(), b.getPosition().get(0).getY())),
-                Position.of(a.getPosition().get(3).getX(), Math.min(a.getPosition().get(3).getY(), b.getPosition().get(3).getY())),
-                Position.of(a.getPosition().get(1).getX(), Math.min(a.getPosition().get(1).getY(), b.getPosition().get(1).getY())),
-                Position.of(a.getPosition().get(2).getX(), Math.min(a.getPosition().get(2).getY(), b.getPosition().get(2).getY()))
-        );
-
-        block.setPosition(positions);
-        return block;
     }
 }

@@ -2,6 +2,8 @@ package com.seassoon.bizflow.job;
 
 import cn.hutool.core.text.UnicodeUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
+import com.seassoon.bizflow.core.component.LocalStorage;
+import com.seassoon.bizflow.core.component.mq.Sanctuary;
 import com.seassoon.bizflow.core.model.Input;
 import com.seassoon.bizflow.core.model.Output;
 import com.seassoon.bizflow.core.util.ConcurrentStopWatch;
@@ -37,25 +39,29 @@ public class BizFlowJob {
     private static final Logger logger = LoggerFactory.getLogger(BizFlowJob.class);
 
     @Autowired
-    private Map<Integer, StringRedisTemplate> databaseRedisTemplate;
+    private Sanctuary sanctuary;
     @Autowired
     private BizFlowProperties properties;
     @Autowired
     private Flow flow;
+    @Autowired
+    private LocalStorage localStorage;
 
     @Scheduled(cron = "*/3 * * * * ?")
     public void execute() {
         // 读取配置文件中的key
-        String key = properties.getRedis().getQueue().get(BizFlowProperties.Redis.Queue.TODO);
-        Duration timeout = properties.getRedis().getTimeout();
+        String todoKey = properties.getRedis().getQueue().get(BizFlowProperties.Redis.Queue.TODO);
+        String flashKey = properties.getRedis().getQueue().get(BizFlowProperties.Redis.Queue.FLASH);
+//        String jsonStr = sanctuary.get(key);
 
-//        String jsonStr = redisTemplate.opsForList().rightPop(key, timeout);
+        // ### For local test only
         String jsonStr = "";
         try {
             jsonStr = new String(Files.readAllBytes(Paths.get("C:\\Users\\lw900\\Downloads\\1458638206939873282\\input.json")), StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // ### For local test only
 
         // 计时器
         ConcurrentStopWatch stopWatch = new ConcurrentStopWatch();
@@ -79,11 +85,19 @@ public class BizFlowJob {
             // 交给流程处理器处理
             Output output = flow.process(input);
 
-            // TODO 结果返回给Redis
-
             // 结束计时，打印耗时表
             stopWatch.stop();
-            logger.info("{}处理完成，耗时如下：\n{}", input.getRecordId(), stopWatch.prettyPrint());
+            logger.info("事项{}处理完成，耗时如下：\n{}", input.getRecordId(), stopWatch.prettyPrint());
+
+            output.setOcrType(properties.getOcrType().toString());
+            output.setTimeCost(Double.valueOf(stopWatch.getTotalTimeSeconds()).intValue());
+
+            // 保存本地json文件
+            localStorage.save(output, "output.json");
+
+            // 结果返回给Redis
+            String outputStr = JSONUtils.writeValueAsString(output);
+            sanctuary.push(flashKey, outputStr);
 
             // 清理BizFlow上下文
             BizFlowContextHolder.reset();

@@ -64,4 +64,8 @@ public class BizFlowContextHolder {
             REDIS_DB_HOLDER.set(redisDB);
         }
     }
+
+    public static Integer getRedisDB() {
+        return REDIS_DB_HOLDER.get();
+    }
 }

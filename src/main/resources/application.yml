@@ -21,6 +21,7 @@ biz-flow:
     timeout: 3s
     queue:
       TODO: "queue:mustang:todo"
+      FLASH: "queue:chasestar:todo"
       OCR_REQUEST: "queue:ocr:request"
       OCR_RESPONSE: "queue:ocr:response"
   minio:

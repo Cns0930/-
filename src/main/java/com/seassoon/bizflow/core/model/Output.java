@@ -36,17 +36,35 @@ public class Output {
     @EqualsAndHashCode
     public static class DocumentClassify {
         private List<Image> resultList = new ArrayList<>();
+
+        public static DocumentClassify of(List<Image> images) {
+            DocumentClassify classify = new DocumentClassify();
+            classify.setResultList(images);
+            return classify;
+        }
     }
 
     @Data
     @EqualsAndHashCode
     public static class House<T> {
         private Room<T> resultList = new Room<>();
+
+        public static <T> House<T> of(List<T> list) {
+            House<T> house = new House<>();
+            house.setResultList(Room.of(list));
+            return house;
+        }
     }
 
     @Data
     @EqualsAndHashCode
     public static class Room<T> {
         private List<T> kvList = new ArrayList<>();
+
+        public static <T> Room<T> of(List<T> list) {
+            Room<T> room = new Room<>();
+            room.setKvList(list);
+            return room;
+        }
     }
 }
