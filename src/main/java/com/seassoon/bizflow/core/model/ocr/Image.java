@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 /**
  * @author lw900925 (liuwei@seassoon.com)
  */
@@ -26,4 +28,12 @@ public class Image {
     // 已分类图片本地保存路径
     @JsonIgnore
     private String classifiedPath;
+
+    // 图像角度
+    @JsonIgnore
+    private Double imageAngle;
+
+    // 表格切分后的cell存放路径
+    @JsonIgnore
+    private List<String> tableCells;
 }

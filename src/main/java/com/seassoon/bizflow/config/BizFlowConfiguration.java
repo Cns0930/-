@@ -37,7 +37,8 @@ public class BizFlowConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "biz-flow", name = "ocr-type", havingValue = "paddle")
     public OcrProcessor paddleOcrProcessor(RestTemplate restTemplate) {
-        return new PaddleOcrProcessor(restTemplate, properties);
+        String url = properties.getIntegration().get(BizFlowProperties.Service.OCR);
+        return new PaddleOcrProcessor(restTemplate, url);
     }
 
     @Bean
@@ -62,6 +63,9 @@ public class BizFlowConfiguration {
         RedisSanctuary sanctuary = new RedisSanctuary();
         sanctuary.setDatabaseRedisTemplate(databaseRedisTemplate);
         sanctuary.setTimeout(properties.getRedis().getTimeout());
+        sanctuary.setInKey(properties.getRedis().getQueue().get(BizFlowProperties.Redis.Queue.TODO));
+        sanctuary.setOutKey(properties.getRedis().getQueue().get(BizFlowProperties.Redis.Queue.FLASH));
+        sanctuary.setTimestampKey(properties.getRedis().getQueue().get(BizFlowProperties.Redis.Queue.TIMESTAMP));
         return sanctuary;
     }
 }

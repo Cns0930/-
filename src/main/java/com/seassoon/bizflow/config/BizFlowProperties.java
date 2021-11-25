@@ -101,6 +101,9 @@ public class BizFlowProperties {
             /** ocr response */
             OCR_RESPONSE,
 
+            /** 事项处理时间戳（重复提交的策略） */
+            TIMESTAMP,
+
             ;
         }
     }

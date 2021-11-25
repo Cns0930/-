@@ -8,6 +8,8 @@ import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +56,7 @@ public class RedisConfiguration {
             map.put(lastRedisDatabase, new StringRedisTemplate(factory));
         }
 
+        RedisSerializer<String> serializer = new StringRedisSerializer();
         return map;
     }
 

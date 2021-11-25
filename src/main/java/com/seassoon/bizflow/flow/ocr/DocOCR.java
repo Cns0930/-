@@ -69,19 +69,21 @@ public class DocOCR implements OCR {
             return path.toString();
         }).collect(Collectors.toList());
 
-        // 2.图片倾斜矫正
-        // TODO 需要Python来做，后续提供接口调用
+        // 2.图片倾斜矫正/方向矫正
+        // TODO 需要Python来做，后续提供接口调用，
+        // 接口返回矫正后的图片的URL和角度，合并。
+        // 将图片链接填入Image的correctedImageUrl，角度填入imageAngle属性
+        // 将图片保存到本地，保存路径为 /files/corrected
+        // 后续给OCR识别时候用correctedImageUrl
 
-        // 3.图片方向矫正
+        // 3.合并倾斜角度和图像方向角度
 
-        // 4.合并倾斜角度和图像方向角度
+        // 4.上传矫正后的图片
 
-        // 5.上传矫正后的图片
-
-        // 6.OCR识别处理
+        // 5.OCR识别处理
         List<OcrResult> ocrResults = post(files.stream().map(Paths::get).collect(Collectors.toList()));
 
-        // 7.处理OCR结果
+        // 6.处理OCR结果
         return ocrResults.stream()
                 .map(this::sortBlock) // 对Block排序
                 .map(ocrResult -> mergeLine(ocrResult, -1)) // 行合并
@@ -147,7 +149,6 @@ public class DocOCR implements OCR {
         boolean b4 = Math.abs(((b.get(0).getY() + b.get(2).getY()) / 2) - a.get(0).getY()) < dotCoincide / 2;
         boolean b5 = Math.abs(((b.get(0).getY() + b.get(2).getY()) / 2) - a.get(2).getY()) < dotCoincide / 2;
 
-        // 下面这个公式太复杂了，我看不懂
         return (b1 && b2) || b3 || b4 || b5;
     }
 

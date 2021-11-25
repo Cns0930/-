@@ -21,16 +21,15 @@ public class PaddleOcrProcessor implements OcrProcessor {
     private static final Logger logger = LoggerFactory.getLogger(PaddleOcrProcessor.class);
 
     private final RestTemplate restTemplate;
-    private final BizFlowProperties properties;
+    private final String url;
 
-    public PaddleOcrProcessor(RestTemplate restTemplate, BizFlowProperties properties) {
+    public PaddleOcrProcessor(RestTemplate restTemplate, String url) {
         this.restTemplate = restTemplate;
-        this.properties = properties;
+        this.url = url;
     }
 
     @Override
     public String process(Path file) {
-        String url = properties.getIntegration().get(BizFlowProperties.Service.OCR);
 
         // 请求头
         HttpHeaders headers = new HttpHeaders();

@@ -24,6 +24,7 @@ biz-flow:
       FLASH: "queue:chasestar:todo"
       OCR_REQUEST: "queue:ocr:request"
       OCR_RESPONSE: "queue:ocr:response"
+      TIMESTAMP: "set:timestamp"
   minio:
     enabled: true
     endpoint: "10.0.96.19"
