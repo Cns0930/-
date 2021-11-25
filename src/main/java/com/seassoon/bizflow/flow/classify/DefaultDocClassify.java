@@ -2,6 +2,7 @@ package com.seassoon.bizflow.flow.classify;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
+import com.seassoon.bizflow.core.model.extra.ExtraKVInfo;
 import com.seassoon.bizflow.core.model.extra.FieldKV;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.model.config.SortConfig;
@@ -62,12 +63,12 @@ public class DefaultDocClassify implements DocClassify {
     }
 
     @Override
-    public List<Image> classify(List<OcrOutput> ocrOutputs, List<Image> images, SortConfig sortConfig, ExtraInfo extraInfo) {
+    public List<Image> classify(List<OcrOutput> ocrOutputs, List<Image> images, SortConfig sortConfig, List<ExtraKVInfo> extraKVs) {
         // 分类映射表，重新分组整理，拆分为正常分类和补充分类
         Map<String, List<List<SortConfig.TypeIdField>>> origTypeIdField = sortConfig.getTypeIdField();
 
         // 结构化数据，来源于cjbb，且document_label包含-999
-        Document xDoc = Optional.ofNullable(extraInfo.getExtraKvInfo().get(0))
+        Document xDoc = Optional.ofNullable(extraKVs.get(0))
                 .filter(extraKVInfo -> "cjbb".equals(extraKVInfo.getSource()))
                 .flatMap(extraKVInfo -> extraKVInfo.getDocumentList().stream()
                         .filter(document -> "-999".equals(document.getDocumentLabel()))

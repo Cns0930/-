@@ -15,7 +15,7 @@ import java.util.List;
 @Component
 public class DummyRuleEngine implements RuleEngine {
     @Override
-    public List<Approval> process(List<DocumentKV> docKVs, List<RuleConfig> ruleConfigs) {
+    public List<Approval> process(List<DocumentKV> docKVs, List<RuleConfig> rules) {
         return null;
     }
 }

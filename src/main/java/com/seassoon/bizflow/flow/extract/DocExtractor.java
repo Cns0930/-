@@ -48,7 +48,7 @@ public class DocExtractor implements Extractor {
     }
 
     @Override
-    public List<DocumentKV> extract(List<Image> sortedImages, List<OcrOutput> ocrOutputs, List<CheckpointConfig> checkpoints, Map<String, String> mapping) {
+    public List<DocumentKV> extract(List<Image> images, List<OcrOutput> ocrOutputs, List<CheckpointConfig> checkpoints, Map<String, String> mapping) {
         // 从上下文获取RecordID
         String recordId = BizFlowContextHolder.getInput().getRecordId();
 
@@ -60,7 +60,7 @@ public class DocExtractor implements Extractor {
             String formTypeId = checkpoint.getFormTypeId();
 
             // 获取对应分类下的图片
-            List<Image> images = sortedImages.stream()
+            List<Image> typedImages = images.stream()
                     .filter(image -> image.getDocumentLabel().equals(formTypeId))
                     .peek(image -> {
                         // 检测图片是否含有表格，并切片保存
@@ -70,7 +70,7 @@ public class DocExtractor implements Extractor {
                     }).collect(Collectors.toList());
 
             // 对应图片的OCR结果
-            List<OcrOutput> imageOCRs = images.stream()
+            List<OcrOutput> imageOCRs = typedImages.stream()
                     .map(image -> ocrOutputs.stream()
                             .filter(ocrOutput -> ocrOutput.getImageName().equals(image.getImageId()))
                             .findAny().orElse(null))
@@ -79,7 +79,7 @@ public class DocExtractor implements Extractor {
             // 提取策略
             UnifiedStrategy strategy = strategyMap.get(mapping.get(formTypeId));
 
-            return extractKV(images, imageOCRs, checkpoint, strategy);
+            return extractKV(typedImages, imageOCRs, checkpoint, strategy);
         }).collect(Collectors.toList());
     }
 

@@ -7,7 +7,9 @@ import com.seassoon.bizflow.core.component.LocalStorage;
 import com.seassoon.bizflow.core.model.Output;
 import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.config.RuleConfig;
+import com.seassoon.bizflow.core.model.config.SortConfig;
 import com.seassoon.bizflow.core.model.extra.DocumentKV;
+import com.seassoon.bizflow.core.model.extra.ExtraKVInfo;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.model.Input;
 import com.seassoon.bizflow.core.model.ocr.OcrOutput;
@@ -17,6 +19,7 @@ import com.seassoon.bizflow.flow.classify.DocClassify;
 import com.seassoon.bizflow.flow.extract.Extractor;
 import com.seassoon.bizflow.flow.ocr.OCR;
 import com.seassoon.bizflow.flow.rule.RuleEngine;
+import com.seassoon.bizflow.support.BizFlowContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,22 +76,23 @@ public class BizFlow extends AbstractFlow {
     }
 
     @Override
-    protected List<Image> sort(List<OcrOutput> ocrOutputs, Input input) {
+    protected List<Image> sort(List<Image> images, List<OcrOutput> ocrOutputs, SortConfig sortConfig, List<ExtraKVInfo> extraKVs) {
         ConcurrentStopWatch stopWatch = new ConcurrentStopWatch();
         stopWatch.start();
 
         // 图片分类
-        List<Image> images = docClassify.classify(ocrOutputs, input.getImageList(), input.getConfig().getSortConfig(), input.getExtraInfo());
+        List<Image> typedImages = docClassify.classify(ocrOutputs, images, sortConfig, extraKVs);
 
         // 已下载的原始图片
         try {
-            Path src = Paths.get(properties.getLocalStorage(), input.getRecordId(), "/files/src");
+            String recordId = BizFlowContextHolder.getInput().getRecordId();;
+            Path src = Paths.get(properties.getLocalStorage(), recordId, "/files/src");
             List<Path> srcFiles = Files.list(src).collect(Collectors.toList());
 
             // 保存已分类的图片到本地
-            for (Image image : images) {
+            for (Image image : typedImages) {
                 // 目标路径，如果不存在就新建
-                Path target = Paths.get(properties.getLocalStorage(), input.getRecordId(), "/files/classified", image.getDocumentLabel());
+                Path target = Paths.get(properties.getLocalStorage(), recordId, "/files/classified", image.getDocumentLabel());
                 if (Files.notExists(target)) {
                     Files.createDirectories(target);
                 }
@@ -112,20 +116,24 @@ public class BizFlow extends AbstractFlow {
         }
 
         // 保存分类结果
-        localStorage.save(images, "classified_images.json");
+        localStorage.save(typedImages, "classified_images.json");
 
         stopWatch.stop();
         logger.info("文档分类完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
-        return images;
+        return typedImages;
     }
 
     @Override
-    protected List<DocumentKV> extract(List<Image> sortedImages, List<OcrOutput> ocrOutputs, List<CheckpointConfig> checkpoints, Map<String, String> mapping) {
+    protected List<DocumentKV> extract(List<Image> images, List<OcrOutput> ocrOutputs, List<CheckpointConfig> checkpoints,
+                                       Map<String, String> mapping, List<ExtraKVInfo> extraKVs) {
         ConcurrentStopWatch stopWatch = new ConcurrentStopWatch();
         stopWatch.start();
 
         // 提取结构化数据
-        List<DocumentKV> docKVs = extractor.extract(sortedImages, ocrOutputs, checkpoints, mapping);
+        List<DocumentKV> docKVs = extractor.extract(images, ocrOutputs, checkpoints, mapping);
+
+        // 如果帮办有结构化数据，合并到结果中
+        mergeExtraKV(docKVs, extraKVs, images, checkpoints);
 
         // 保存提取结果
         localStorage.save(docKVs, "doc_kv.json");
@@ -135,12 +143,16 @@ public class BizFlow extends AbstractFlow {
         return null;
     }
 
+    private void mergeExtraKV(List<DocumentKV> docKVs, List<ExtraKVInfo> extraKVs, List<Image> images, List<CheckpointConfig> checkpoints) {
+        // TODO...
+    }
+
     @Override
-    protected List<Approval> rule(List<DocumentKV> docKVs, List<RuleConfig> ruleConfigs) {
+    protected List<Approval> rule(List<DocumentKV> docKVs, List<RuleConfig> rules) {
         ConcurrentStopWatch stopWatch = new ConcurrentStopWatch();
         stopWatch.start();
 
-        List<Approval> approvals = ruleEngine.process(docKVs, ruleConfigs);
+        List<Approval> approvals = ruleEngine.process(docKVs, rules);
 
         localStorage.save(docKVs, "rule_approvals.json");
 
