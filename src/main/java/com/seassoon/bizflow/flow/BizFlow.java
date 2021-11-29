@@ -165,33 +165,17 @@ public class BizFlow extends AbstractFlow {
 
         // 后面需要多次查找的数据先处理成map
         // documentLabel -> image
-//        Map<String, List<Image>> imageMap = new HashMap<>();
-//        images.forEach( image -> {
-//            List<Image> list = imageMap.getOrDefault(image.getDocumentLabel(), new ArrayList<>());
-//            list.add(image);
-//            imageMap.put(image.getDocumentLabel(), list);
-//        });
         Map<String, List<Image>> imageMap = images.stream().collect(Collectors.groupingBy(Image::getDocumentLabel));
 
         // documentLabel -> documentField -> fieldKV
-//        Map<String, Map<String, FieldKV>> kvMap = new HashMap<>();
-//        extraKVInfo.getDocumentList().forEach( document -> {
-//            Map<String, FieldKV> map = kvMap.getOrDefault(document.getDocumentLabel(), new HashMap<>());
-//            document.getFieldVal().forEach( fieldKV -> {
-//                map.putIfAbsent(fieldKV.getKey(), fieldKV);
-//            });
-//            kvMap.put(document.getDocumentLabel(), map);
-//        });
+        // 冲突时取前面的 防止运行不下去
         Map<String, Map<String, FieldKV>> kvMap = extraKVInfo.getDocumentList().stream()
                 .collect(Collectors.toMap(Document::getDocumentLabel, document ->
-                        document.getFieldVal().stream().collect(Collectors.toMap(FieldKV::getKey, fieldKV -> fieldKV))));
+                        document.getFieldVal().stream().collect(Collectors.toMap(FieldKV::getKey, fieldKV -> fieldKV, (f1, f2) -> f1)), (d1, d2) -> d1));
 
         // documentLabel -> checkpoint
-//        Map<String, CheckpointConfig> checkMap = new HashMap<>();
-//        checkpoints.forEach( checkpointConfig -> {
-//            checkMap.putIfAbsent(checkpointConfig.getFormTypeId(), checkpointConfig);
-//        });
-        Map<String, CheckpointConfig> checkMap = checkpoints.stream().collect(Collectors.toMap(CheckpointConfig::getFormTypeId, checkpointConfig -> checkpointConfig));
+        // 冲突时取前面的 防止运行不下去
+        Map<String, CheckpointConfig> checkMap = checkpoints.stream().collect(Collectors.toMap(CheckpointConfig::getFormTypeId, checkpointConfig -> checkpointConfig, (c1, c2) -> c1));
 
         // 对提取结果遍历进行替换操作
         docKVs.forEach( documentKV -> {
@@ -218,20 +202,17 @@ public class BizFlow extends AbstractFlow {
                 }
 
                 // 填入image_id 和 document_page
-                if(!StringUtils.hasLength(content.getImageId()) && !CollectionUtils.isEmpty(imageList)){
-                    // 筛选document_source
-//                    List<Image> filterList = imageList.stream().filter( image ->
-//                        image.getDocumentSource() != null && image.getDocumentSource() == 1
-//                    ).collect(Collectors.toList());
-
-                    imageList.stream().filter(image -> image.getDocumentSource() != null && image.getDocumentSource() == 1).findAny().ifPresent(image -> {
+                if(!StringUtils.hasLength(content.getImageId()) && !CollectionUtils.isEmpty(imageList)) {
+                    imageList.stream().filter(image -> image.getDocumentSource() != null && image.getDocumentSource().equals(1)).findAny().ifPresent(image -> {
+                        // 默认情况填充
                         content.setImageId(image.getImageId());
                         content.setPage(image.getDocumentPage());
                         // 多页情况 找到提取点 得到页码
+                        // 用findFirst和算法原先逻辑一致 防止奇怪情况?
                         if (checkpointConfig != null && checkpointConfig.getMultiPage()) {
                             checkpointConfig.getExtractPoint().stream().filter(extractPoint ->
-                                    documentField.equals(extractPoint.getDocumentField())).findAny().flatMap(extractPoint ->
-                                    imageList.stream().filter(img -> img.getDocumentPage().equals(extractPoint.getPage())).findAny()).ifPresent(img -> {
+                                    documentField.equals(extractPoint.getDocumentField())).findFirst().flatMap(extractPoint ->
+                                    imageList.stream().filter(img -> img.getDocumentSource() != null && image.getDocumentSource().equals(1) && img.getDocumentPage().equals(extractPoint.getPage())).findFirst()).ifPresent(img -> {
                                 // 根据页码 找到正确的image
                                 content.setImageId(img.getImageId());
                                 content.setPage(img.getDocumentPage());
@@ -239,27 +220,6 @@ public class BizFlow extends AbstractFlow {
                         }
 
                     });
-//                    if(!CollectionUtils.isEmpty(filterList)) {
-                        // 默认情况 取第一个
-//                        content.setImageId(filterList.get(0).getImageId());
-//                        content.setPage(filterList.get(0).getDocumentPage());
-//                        if (checkpointConfig != null && checkpointConfig.getMultiPage()) {
-                            // 多页情况 找到提取点 得到页码
-//                            Optional<CheckpointConfig.ExtractPoint> optional = checkpointConfig.getExtractPoint().stream()
-//                                    .filter(extractPoint -> documentField.equals(extractPoint.getDocumentField())).findFirst();
-//                            if (optional.isPresent()) {
-//                                CheckpointConfig.ExtractPoint extractPoint = optional.get();
-//                                for (Image image : imageList) {
-//                                    // 根据页码 找到正确的image
-//                                    if(image.getDocumentPage().equals(extractPoint.getPage())){
-//                                        content.setImageId(image.getImageId());
-//                                        content.setPage(image.getDocumentPage());
-//                                        break;
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
                 }
 
                 // 其他字段填充
