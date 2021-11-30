@@ -15,9 +15,6 @@ import java.util.stream.Collectors;
  */
 public class HardWritingDetector extends DocElementDetector {
 
-    private ApplicationContext appContext;
-    private String url;
-
     @SuppressWarnings("unchecked")
     @Override
     public Field detectField(Map<String, Object> params) {

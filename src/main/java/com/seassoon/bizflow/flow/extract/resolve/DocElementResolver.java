@@ -1,13 +1,15 @@
 package com.seassoon.bizflow.flow.extract.resolve;
 
-import com.seassoon.bizflow.config.BizFlowProperties;
-import com.seassoon.bizflow.core.component.HTTPCaller;
+import cn.hutool.core.util.StrUtil;
+import com.google.common.collect.LinkedHashMultiset;
+import com.google.common.collect.Multiset;
 import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.extra.Content;
 import com.seassoon.bizflow.core.model.ocr.Image;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,10 +19,7 @@ import java.util.Map;
 @Component
 public class DocElementResolver implements Resolver {
 
-    @Autowired
-    private BizFlowProperties properties;
-    @Autowired
-    private HTTPCaller httpCaller;
+    private final List<String> supportedSealIds = Arrays.asList("1", "2", "3", "4", "5", "6", "8", "9", "10", "11", "12", "20");
 
     @Override
     public Content resolve(Image image, Map<String, Object> params) {
@@ -32,6 +31,10 @@ public class DocElementResolver implements Resolver {
 
     @Override
     public boolean support(CheckpointConfig.ExtractPoint extractPoint) {
-        return false;
+        String signSealId = extractPoint.getSignSealId();
+        if (StrUtil.isBlank(signSealId)) {
+            return false;
+        }
+        return supportedSealIds.contains(signSealId);
     }
 }

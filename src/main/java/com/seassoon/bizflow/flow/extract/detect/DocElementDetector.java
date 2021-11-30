@@ -2,6 +2,8 @@ package com.seassoon.bizflow.flow.extract.detect;
 
 import cn.hutool.cache.impl.LRUCache;
 import com.seassoon.bizflow.core.component.HTTPCaller;
+import com.seassoon.bizflow.core.model.element.ElementResponse;
+import com.seassoon.bizflow.core.model.element.Elements;
 import com.seassoon.bizflow.core.model.extra.Field;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.util.JSONUtils;
@@ -45,7 +47,7 @@ public abstract class DocElementDetector implements Detector {
      * }
      * </pre>
      */
-    private final LRUCache<String, Map<String, Map<String, Object>>> ELEMENTS_CACHE = new LRUCache<>(20);
+    private final LRUCache<String, Map<String, Elements>> ELEMENTS_CACHE = new LRUCache<>(20);
 
     private ApplicationContext appContext;
     private String url;
@@ -59,7 +61,7 @@ public abstract class DocElementDetector implements Detector {
         String imageId = (String) params.get("imageId");
         List<Image> images = (List<Image>) params.get("images");
 
-        Map<String, Object> elements = getElements(formTypeId, imageId, images);
+        Elements elements = getElements(formTypeId, imageId, images);
         params.put("elements", elements);
         return detectField(params);
     }
@@ -73,39 +75,38 @@ public abstract class DocElementDetector implements Detector {
      * @param images 当前分类的所有图片
      * @return 图片元素检测结果
      */
-    public Map<String, Object> getElements(String label, String imageId, List<Image> images) {
+    public Elements getElements(String label, String imageId, List<Image> images) {
         String recordId = BizFlowContextHolder.getInput().getRecordId();
         String key = recordId + ":" + label;
 
         // 缓存中是否已有结果
-        Map<String, Map<String, Object>> typeElements = ELEMENTS_CACHE.get(key);
-        if (typeElements == null) {
-            typeElements = callAPI(images);
-            ELEMENTS_CACHE.put(key, typeElements);
+        Map<String, Elements> elements = ELEMENTS_CACHE.get(key);
+        if (elements == null) {
+            elements = callAPI(images);
+            ELEMENTS_CACHE.put(key, elements);
         }
 
-        if (typeElements == null) {
+        if (elements == null) {
             logger.error("获取文档元素出错，结果为null");
             return null;
         }
 
         // 获取指定文档ID的结果
         String imageKey = imageId + ".jpg";
-        return typeElements.get(imageKey);
+        return elements.get(imageKey);
     }
 
-    @SuppressWarnings("unchecked")
-    public Map<String, Map<String, Object>> callAPI(List<Image> images) {
+    public Map<String, Elements> callAPI(List<Image> images) {
         Map<String, String> params = images.stream().collect(Collectors.toMap(image -> image.getImageId() + ".jpg", image -> image.getCorrected().getUrl()));
         String strQueryParam = JSONUtils.writeValueAsString(params);
         String strUrl = this.url + "?" + strQueryParam;
         HTTPCaller httpCaller = this.appContext.getBean(HTTPCaller.class);
-        Map<String, Object> response = httpCaller.post(strUrl, new HashMap<>(), Map.class);
-        if (!response.get("status").equals("ok")) {
+        ElementResponse response = httpCaller.post(strUrl, new HashMap<>(), ElementResponse.class);
+        if (!response.getStatus().equals("ok")) {
             logger.error("调用元素检测接口返回失败：{}", response);
         }
 
-        Map<String, Map<String, Object>> elements = (Map<String, Map<String, Object>>) response.get("elements");
+        Map<String, Elements> elements = response.getElements();
         if (elements == null) {
             logger.error("调用元素检测接口返回为空，未找到elements属性");
         }
