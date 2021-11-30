@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.img.ImgUtil;
 
 import java.awt.image.BufferedImage;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,14 +32,14 @@ public class ImgUtils extends ImgUtil {
      * @param ratio 计算系数
      * @return 计算后的坐标
      */
-    public static List<List<Integer>> calcLocation(String path, List<List<Double>> ratio) {
+    public static List<List<Integer>> calcLocation(String path, List<List<BigDecimal>> ratio) {
         // 读取图片的宽高
         Shape shape = getShape(path);
         if (CollectionUtil.isNotEmpty(ratio)) {
-            Integer a = Double.valueOf(ratio.get(0).get(0) * shape.getHeight()).intValue();
-            Integer b = Double.valueOf(ratio.get(0).get(1) * shape.getWidth()).intValue();
-            Integer c = Double.valueOf(ratio.get(1).get(0) * shape.getHeight()).intValue();
-            Integer d = Double.valueOf(ratio.get(1).get(1) * shape.getWidth()).intValue();
+            Integer a = ratio.get(0).get(0).multiply(BigDecimal.valueOf(shape.getHeight())).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
+            Integer b = ratio.get(0).get(1).multiply(BigDecimal.valueOf(shape.getWidth())).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
+            Integer c = ratio.get(1).get(0).multiply(BigDecimal.valueOf(shape.getHeight())).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
+            Integer d = ratio.get(1).get(1).multiply(BigDecimal.valueOf(shape.getWidth())).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
 
             List<Integer> lt = Arrays.asList(a, b);
             List<Integer> rb = Arrays.asList(c, d);
