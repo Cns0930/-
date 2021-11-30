@@ -55,7 +55,8 @@ biz-flow:
     NER: "http://10.0.96.19:30844/api/algorithm/ner"
     DOC_ELEMENT: "http://10.0.96.19:30517/api/algorithm/detect_docs_elements"
   algorithm:
-    dot-coincide: 23            # 判断两个点是否重合的像素阈值
-    match-threshold: 0.92       # 字符串模糊匹配阈值
+    dot-coincide: 23                # 判断两个点是否重合的像素阈值
+    match-threshold: 0.92           # 字符串模糊匹配阈值
+    element-match-threshold: 0.4    # 文档元素是否在目标区域内的匹配阈值
 
 

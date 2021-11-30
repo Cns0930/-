@@ -241,11 +241,11 @@ public class BizFlow extends AbstractFlow {
      * @param valueInfo
      * @return
      */
-    private List<List<String>> calLocation(List<Field> valueInfo){
+    private List<List<Integer>> calLocation(List<Field> valueInfo){
         if(valueInfo.size() == 1){
             return valueInfo.get(0).getFieldLocation();
         }
-        List<List<String>> location = new ArrayList<>();
+        List<List<Integer>> location = new ArrayList<>();
         for(Field field : valueInfo){
             if(field.getFieldLocation() != null && field.getFieldLocation().size() == 2){
                 if(location.isEmpty()){

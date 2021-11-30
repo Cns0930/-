@@ -22,10 +22,11 @@ public class SinglePageStrategy implements UnifiedStrategy {
 
     @Override
     public List<Content> parse(List<Image> images, List<OcrOutput> ocrOutputs, CheckpointConfig checkpoint) {
+        String formTypeId = checkpoint.getFormTypeId();
 
         // 检查是否为多页
         if (checkpoint.getMultiPage()) {
-            logger.error("仅支持单页提取，请检查事项配置");
+            logger.error("材料{}仅支持单页提取，请检查事项配置", formTypeId);
             return new ArrayList<>();
         }
 

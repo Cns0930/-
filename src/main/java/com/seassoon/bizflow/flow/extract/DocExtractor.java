@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,10 +30,14 @@ import java.util.stream.Collectors;
 @Component
 public class DocExtractor implements Extractor {
 
-    /** logger */
+    /**
+     * logger
+     */
     private static final Logger logger = LoggerFactory.getLogger(DocExtractor.class);
 
-    /** 提取策略 */
+    /**
+     * 提取策略
+     */
     private final Map<String, UnifiedStrategy> strategyMap = new HashMap<>();
 
     @Autowired
@@ -62,19 +65,16 @@ public class DocExtractor implements Extractor {
             // 获取对应分类下的图片
             List<Image> typedImages = images.stream()
                     .filter(image -> image.getDocumentLabel().equals(formTypeId))
-                    .peek(image -> {
+                    /*.peek(image -> {
                         // 检测图片是否含有表格，并切片保存
                         String target = Paths.get(properties.getLocalStorage(), "/files/cell", image.getDocumentLabel(), image.getImageId()).toString();
                         List<String> cells = tableCutter.cutAndSave(image.getClassifiedPath(), target);
                         image.setTableCells(cells);
-                    }).collect(Collectors.toList());
+                    })*/.collect(Collectors.toList());
 
             // 对应图片的OCR结果
-            List<OcrOutput> imageOCRs = typedImages.stream()
-                    .map(image -> ocrOutputs.stream()
-                            .filter(ocrOutput -> ocrOutput.getImageName().equals(image.getImageId()))
-                            .findAny().orElse(null))
-                    .collect(Collectors.toList());
+            List<OcrOutput> imageOCRs = ocrOutputs.stream().filter(ocr ->
+                    typedImages.stream().anyMatch(image -> image.getImageId().equals(ocr.getImageName()))).collect(Collectors.toList());
 
             // 提取策略
             UnifiedStrategy strategy = strategyMap.get(mapping.get(formTypeId));
@@ -85,10 +85,11 @@ public class DocExtractor implements Extractor {
 
     /**
      * 单个分类提取
-     * @param images 对应分类的图片
+     *
+     * @param images     对应分类的图片
      * @param ocrOutputs 图片OCR
      * @param checkpoint 提取点配置
-     * @param strategy 提取策略
+     * @param strategy   提取策略
      * @return {@link DocumentKV}
      */
     private DocumentKV extractKV(List<Image> images, List<OcrOutput> ocrOutputs, CheckpointConfig checkpoint, UnifiedStrategy strategy) {

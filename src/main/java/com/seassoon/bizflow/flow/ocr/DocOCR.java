@@ -72,7 +72,7 @@ public class DocOCR implements OCR {
         // 2.图片倾斜矫正/方向矫正
         // TODO 需要Python来做，后续提供接口调用，
         // 接口返回矫正后的图片的URL和角度，合并。
-        // 将图片链接填入Image的correctedImageUrl，角度填入imageAngle属性
+        // 将图片链接填入Image的correctedImageUrl
         // 将图片保存到本地，保存路径为 /files/corrected
         // 后续给OCR识别时候用correctedImageUrl
 

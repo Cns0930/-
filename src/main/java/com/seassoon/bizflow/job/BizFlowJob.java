@@ -61,6 +61,9 @@ public class BizFlowJob {
         ConcurrentStopWatch stopWatch = new ConcurrentStopWatch();
         stopWatch.start(input.getRecordId());
 
+        // 保存本地input.json
+        localStorage.save(input, "input.json");
+
         // 初始化BizFlow上下文
         BizFlowContextHolder.setInput(input);
         BizFlowContextHolder.putMDC(input.getRecordId());
@@ -76,7 +79,7 @@ public class BizFlowJob {
         output.setOcrType(properties.getOcrType().toString());
         output.setTimeCost(Double.valueOf(stopWatch.getTotalTimeSeconds()).intValue());
 
-        // 保存本地json文件
+        // 保存本地output.json
         localStorage.save(output, "output.json");
 
         // 结果返回给Redis

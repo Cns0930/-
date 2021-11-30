@@ -12,10 +12,10 @@ import java.util.List;
 @EqualsAndHashCode
 public class Field {
     private String fieldContent;
-    private List<List<String>> fieldLocation;
+    private List<List<Integer>> fieldLocation;
     private Double score;
 
-    public static Field of(String fieldContent, List<List<String>> fieldLocation, double score) {
+    public static Field of(String fieldContent, List<List<Integer>> fieldLocation, double score) {
         Field field = new Field();
         field.setFieldContent(fieldContent);
         field.setFieldLocation(fieldLocation);

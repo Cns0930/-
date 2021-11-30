@@ -153,5 +153,6 @@ public class BizFlowProperties {
     public static class Algorithm {
         private Integer dotCoincide;
         private Double matchThreshold;
+        private Double elementMatchThreshold;
     }
 }
