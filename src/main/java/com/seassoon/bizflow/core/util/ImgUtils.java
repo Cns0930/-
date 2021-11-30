@@ -18,7 +18,7 @@ public class ImgUtils extends ImgUtil {
      * @param path 图片路径
      * @return {@link Shape}
      */
-    private Shape getShape(String path) {
+    public Shape getShape(String path) {
         BufferedImage image = read(path);
         return Shape.of(image.getWidth(), image.getHeight());
 
@@ -31,7 +31,7 @@ public class ImgUtils extends ImgUtil {
      * @param ratio 计算系数
      * @return 计算后的坐标
      */
-    private List<List<Integer>> calcLocation(String path, List<List<Integer>> ratio) {
+    public List<List<Integer>> calcLocation(String path, List<List<Integer>> ratio) {
         // 读取图片的宽高
         Shape shape = getShape(path);
         if (CollectionUtil.isNotEmpty(ratio)) {
