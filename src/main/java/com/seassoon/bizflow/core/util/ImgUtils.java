@@ -31,12 +31,17 @@ public class ImgUtils extends ImgUtil {
      * @param ratio 计算系数
      * @return 计算后的坐标
      */
-    public static List<List<Integer>> calcLocation(String path, List<List<Integer>> ratio) {
+    public static List<List<Integer>> calcLocation(String path, List<List<Double>> ratio) {
         // 读取图片的宽高
         Shape shape = getShape(path);
         if (CollectionUtil.isNotEmpty(ratio)) {
-            List<Integer> lt = Arrays.asList(ratio.get(0).get(0) * shape.getHeight(), ratio.get(0).get(1) * shape.getWidth());
-            List<Integer> rb = Arrays.asList(ratio.get(1).get(0) * shape.getHeight(), ratio.get(1).get(1) * shape.getWidth());
+            Integer a = Double.valueOf(ratio.get(0).get(0) * shape.getHeight()).intValue();
+            Integer b = Double.valueOf(ratio.get(0).get(1) * shape.getWidth()).intValue();
+            Integer c = Double.valueOf(ratio.get(1).get(0) * shape.getHeight()).intValue();
+            Integer d = Double.valueOf(ratio.get(1).get(1) * shape.getWidth()).intValue();
+
+            List<Integer> lt = Arrays.asList(a, b);
+            List<Integer> rb = Arrays.asList(c, d);
             return Arrays.asList(lt, rb);
         } else {
             return Arrays.asList(Arrays.asList(1, 1), Arrays.asList(shape.getHeight() - 1, shape.getWidth() - 1));
