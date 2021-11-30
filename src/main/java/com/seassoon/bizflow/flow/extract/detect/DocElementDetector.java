@@ -4,6 +4,7 @@ import cn.hutool.cache.impl.LRUCache;
 import com.seassoon.bizflow.core.component.HTTPCaller;
 import com.seassoon.bizflow.core.model.element.ElementResponse;
 import com.seassoon.bizflow.core.model.element.Elements;
+import com.seassoon.bizflow.core.model.element.Item;
 import com.seassoon.bizflow.core.model.extra.Field;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.util.JSONUtils;
@@ -135,18 +136,17 @@ public abstract class DocElementDetector implements Detector {
     /**
      * 合并检测元素中的block属性
      *
-     * @param elements 未合并的元素
+     * @param items 未合并的元素
      * @return 合并后坐标
      */
-    @SuppressWarnings("unchecked")
-    protected List<List<Integer>> merge(List<Map<String, Object>> elements) {
+    protected List<List<Integer>> merge(List<Item> items) {
         int xMin = 10000, yMin = 10000, xMax = 0, yMax = 0;
-        if (elements.size() == 1) {
-            return (List<List<Integer>>) elements.get(0).get("position");
+        if (items.size() == 1) {
+            return items.get(0).getPosition();
         }
 
-        for (Map<String, Object> element : elements) {
-            List<List<Integer>> position = (List<List<Integer>>) element.get("position");
+        for (Item item : items) {
+            List<List<Integer>> position = item.getPosition();
             xMin = Math.min(position.get(0).get(0), xMin);
             yMin = Math.min(position.get(0).get(1), yMin);
             xMax = Math.max(position.get(1).get(0), xMax);

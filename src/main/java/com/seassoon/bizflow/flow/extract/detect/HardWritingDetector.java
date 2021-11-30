@@ -1,8 +1,9 @@
 package com.seassoon.bizflow.flow.extract.detect;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.seassoon.bizflow.core.model.element.Elements;
+import com.seassoon.bizflow.core.model.element.Item;
 import com.seassoon.bizflow.core.model.extra.Field;
-import org.springframework.context.ApplicationContext;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,9 +19,8 @@ public class HardWritingDetector extends DocElementDetector {
     @SuppressWarnings("unchecked")
     @Override
     public Field detectField(Map<String, Object> params) {
-
         // 单张图片的检测结果
-        Map<String, Object> elements = (Map<String, Object>) params.get("elements");
+        Elements elements = (Elements) params.get("elements");
         if (elements == null) {
             return Field.of(null, null, 0);
         }
@@ -28,16 +28,16 @@ public class HardWritingDetector extends DocElementDetector {
         // 检测区域的坐标
         List<List<Integer>> area = (List<List<Integer>>) params.get("area");
         Double threshold = (Double) params.get("threshold");
-        List<Map<String, Object>> hw = (List<Map<String, Object>>) elements.get("hw");
+        List<Item> hw = elements.getHw();
 
-        List<Map<String, Object>> matches = hw.stream().filter(map -> {
-            List<List<Integer>> targetPos = (List<List<Integer>>) map.get("position");
-            Double overlapArea = getIOT(targetPos, area);
+        List<Item> items = hw.stream().filter(item -> {
+            List<List<Integer>> position = item.getPosition();
+            Double overlapArea = getIOT(position, area);
             return overlapArea > threshold;
         }).collect(Collectors.toList());
 
-        if (CollectionUtil.isNotEmpty(matches)) {
-            List<List<Integer>> position = merge(matches);
+        if (CollectionUtil.isNotEmpty(items)) {
+            List<List<Integer>> position = merge(items);
             List<List<Integer>> location = Arrays.asList(
                     Arrays.asList(position.get(0).get(1), position.get(0).get(0)),
                     Arrays.asList(position.get(1).get(1), position.get(1).get(0)));
