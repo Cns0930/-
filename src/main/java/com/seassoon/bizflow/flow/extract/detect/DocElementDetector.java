@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,48 @@ public abstract class DocElementDetector implements Detector {
             logger.error("调用元素检测接口返回为空，未找到elements属性");
         }
         return elements;
+    }
+
+    /**
+     * 判定目标A在B区域中的比例<p>
+     * box : [y_start, x_start, y_end, x_end]
+     *
+     * @param a 目标区域
+     * @param b 参考区域
+     * @return 比例值
+     */
+    protected Double getIOT(List<List<Integer>> a, List<List<Integer>> b) {
+        Integer xA = Math.max(a.get(0).get(1), b.get(0).get(1));
+        Integer yA = Math.max(a.get(0).get(0), b.get(0).get(0));
+        Integer xB = Math.min(a.get(1).get(1), b.get(1).get(1));
+        Integer yB = Math.min(a.get(1).get(0), b.get(1).get(0));
+
+        int interArea = Math.max(0, xB - xA + 1) * Math.max(0, yB - yA + 1);
+        int aArea = (a.get(1).get(1) - a.get(0).get(1) + 1) * (a.get(1).get(0) - a.get(0).get(0) + 1);
+        return (double) interArea / aArea;
+    }
+
+    /**
+     * 合并检测元素中的block属性
+     *
+     * @param elements 未合并的元素
+     * @return 合并后坐标
+     */
+    @SuppressWarnings("unchecked")
+    protected List<List<Integer>> merge(List<Map<String, Object>> elements) {
+        int xMin = 10000, yMin = 10000, xMax = 0, yMax = 0;
+        if (elements.size() == 1) {
+            return (List<List<Integer>>) elements.get(0).get("position");
+        }
+
+        for (Map<String, Object> element : elements) {
+            List<List<Integer>> position = (List<List<Integer>>) element.get("position");
+            xMin = Math.min(position.get(0).get(0), xMin);
+            yMin = Math.min(position.get(0).get(1), yMin);
+            xMax = Math.max(position.get(1).get(0), xMax);
+            yMax = Math.max(position.get(1).get(1), yMax);
+        }
+        return Arrays.asList(Arrays.asList(xMin, yMin), Arrays.asList(xMax, yMax));
     }
 
     public void setAppContext(ApplicationContext appContext) {
