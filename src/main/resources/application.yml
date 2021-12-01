@@ -49,7 +49,7 @@ biz-flow:
     STAMP: "http://10.0.96.19:32156/api/algorithm/extract_stamp_info"
     CHECK_BOX: "http://10.0.96.19:30132/api/algorithm/extract_checkbox_info"
     ID_CARD: "http://10.0.96.19:30804/api/algorithm/extract_id_card_info"
-    ID_CARD_EXTRACT: "http://10.0.96.19:30623/api/algorithm/extract_id_card_info"
+    ID_CARD_EXTRACT: "http://10.0.96.19:31785/api/algorithm/extract_id_card_info"
     ORIENTATION: "http://10.0.96.19:31477/api/algorithm/text_orientation_detection"
     DRIVER_LICENSE: "http://10.0.96.19:30145/api/algorithm/detect_driving_license"
     NER: "http://10.0.96.19:30844/api/algorithm/ner"

@@ -8,6 +8,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -26,11 +28,18 @@ public class HTTPCaller {
     private RestTemplate restTemplate;
 
     public <T> T post(String url, Map<String, Object> params, Class<T> clazz) {
+        return post(url, params, MediaType.APPLICATION_JSON, clazz);
+    }
+
+    public <T> T post(String url, Map<String, Object> params, MediaType contentType, Class<T> clazz) {
         // 请求头
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(contentType);
 
-        ResponseEntity<T> responseEntity = restTemplate.postForEntity(url, new HttpEntity<>(params, headers), clazz);
+        MultiValueMap<String, Object> formData = new LinkedMultiValueMap<>();
+        params.forEach(formData::add);
+
+        ResponseEntity<T> responseEntity = restTemplate.postForEntity(url, new HttpEntity<>(formData, headers), clazz);
         return renderResponseEntity(responseEntity);
     }
 
