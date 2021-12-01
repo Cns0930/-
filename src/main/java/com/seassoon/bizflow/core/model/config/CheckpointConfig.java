@@ -51,5 +51,44 @@ public class CheckpointConfig {
             private String pattern;
             private String method;
         }
+
+        public enum SignSealId {
+            HANDWRITING("1"),
+            STAMP_OLD("2"),
+            FILL_DATE("3"),
+            ATTACH_ID("4"),
+            FILL("7"),
+
+            CHECKBOX("13"),
+            STAMP_NEW("14"),
+            CHECK_RIGHT("15_right"),
+            CHECK_LEFT("15_left"),
+            ATTACH_PHOTO("16"),
+            STAMP_RED("17"),
+
+            ;
+            private String value;
+
+            public String getValue() {
+                return value;
+            }
+
+            public void setValue(String value) {
+                this.value = value;
+            }
+
+            SignSealId(String value) {
+                this.value = value;
+            }
+
+            public static SignSealId getByValue(String value){
+                for(SignSealId signSealId : values()){
+                    if(signSealId.getValue().equals(value)){
+                        return signSealId;
+                    }
+                }
+                return null;
+            }
+        }
     }
 }

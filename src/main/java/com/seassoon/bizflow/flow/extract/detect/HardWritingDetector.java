@@ -6,9 +6,6 @@ import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.model.element.Elements;
 import com.seassoon.bizflow.core.model.element.Item;
 import com.seassoon.bizflow.core.model.extra.Field;
-import org.checkerframework.checker.units.qual.A;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -37,12 +34,6 @@ public class HardWritingDetector extends DocElementDetector {
         Double threshold = (Double) params.get("threshold");
         List<Item> hw = elements.getHw();
 
-        List<Item> items = hw.stream().filter(item -> {
-            List<List<Integer>> position = item.getPosition();
-            Double overlapArea = getIOT(position, detectArea);
-            return overlapArea > threshold;
-        }).collect(Collectors.toList());
-
         String posCont = null;
         String negCont = null;
         CheckpointConfig.ExtractPoint.SignSealId signSealId =
@@ -60,13 +51,10 @@ public class HardWritingDetector extends DocElementDetector {
             }
         }
 
-        if (CollectionUtil.isNotEmpty(items)) {
-            List<List<Integer>> position = merge(items);
-            List<List<Integer>> location = Arrays.asList(
-                    Arrays.asList(position.get(0).get(1), position.get(0).get(0)),
-                    Arrays.asList(position.get(1).get(1), position.get(1).get(0)));
+        List<List<Integer>> location = detectLocation(hw, detectArea, threshold);
+        if(location != null){
             return Field.of(posCont, location, 1.0);
-        } else {
+        }else {
             return Field.of(negCont, null, 1.0);
         }
     }
