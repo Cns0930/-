@@ -112,23 +112,6 @@ public class IdCardResolver extends AbstractResolver {
         return FIELD_SEAL_ID_MAP.containsValue(signSealId);
     }
 
-    private Path snapshot(Image image, List<List<Integer>> location) {
-        String recordId = BizFlowContextHolder.getInput().getRecordId();
-
-        // 截图坐标（x和y分别未起始位置的坐标，width和height分别为要截图的宽和高）
-        int x = location.get(0).get(1),
-            y = location.get(0).get(0),
-            width = location.get(1).get(1) - x,
-            height = location.get(1).get(0) - y;
-        Rectangle rectangle = new Rectangle(x, y, width, height);
-
-        // 截图保存位置（文件命名规则：起始宽-起始高_结束宽-结束高）
-        String strFilename = x + "-" + y + "_" + location.get(1).get(1) + "-" + location.get(1).get(0);
-        Path snapshot = Paths.get(properties.getLocalStorage(), recordId, "files/snapshot", image.getDocumentLabel(), image.getImageId(), strFilename);
-        ImgUtils.cut(Paths.get(image.getCorrected().getLocalPath()).toFile(), snapshot.toFile(), rectangle);
-        return snapshot;
-    }
-
     /**
      * 获取身份证提取信息。<p>
      * 先从缓存中获取，如果缓存中没有就调用接口获取。

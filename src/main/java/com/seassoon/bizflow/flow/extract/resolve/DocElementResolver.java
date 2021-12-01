@@ -12,11 +12,12 @@ import com.seassoon.bizflow.flow.extract.detect.DocElementDetector;
 import com.seassoon.bizflow.flow.extract.detect.HardWritingDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -24,7 +25,7 @@ import java.util.*;
  * @author lw900925 (liuwei@seassoon.com)
  */
 @Component
-public class DocElementResolver extends AbstractResolver {
+public class DocElementResolver extends AbstractResolver implements InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(DocElementDetector.class);
 
@@ -36,8 +37,8 @@ public class DocElementResolver extends AbstractResolver {
     @Autowired
     private ApplicationContext appContext;
 
-    @PostConstruct
-    private void postConstruct() {
+    @Override
+    public void afterPropertiesSet() throws Exception {
         // 初始化文档元素提取实例
         SEAL_ID_DETECTOR_MAP.put("1", appContext.getBean(HardWritingDetector.class));
     }
@@ -55,7 +56,7 @@ public class DocElementResolver extends AbstractResolver {
         String signSealId = extractPoint.getSignSealId();
         Detector detector = SEAL_ID_DETECTOR_MAP.get(signSealId);
         if (detector == null) {
-            logger.error("未找到对应的文档元素提取器，请检查checkpoint配置：formTypeId={}, field={}, signSealId={}",
+            logger.error("未找到对应的文档元素提取器（Detector），请检查checkpoint配置：formTypeId={}, field={}, signSealId={}",
                     formTypeId, extractPoint.getDocumentField(), signSealId);
             return content;
         }
@@ -63,8 +64,11 @@ public class DocElementResolver extends AbstractResolver {
         // 补充参数
         params.put("imageId", image.getImageId());
         params.put("threshold", properties.getAlgorithm().getElementMatchThreshold());
-        // 计算检测位置的坐标
+        // 计算检测位置的坐标，并切图
         List<List<Integer>> location = ImgUtils.calcLocation(strPath, extractPoint.getInitPosition());
+        Path snapshot = snapshot(image, location);
+        params.put("path", snapshot.toString());
+        // 检测区域
         List<List<Integer>> detectArea = Arrays.asList(
                 Arrays.asList(location.get(0).get(1), location.get(0).get(0)),
                 Arrays.asList(location.get(1).get(1), location.get(1).get(0)));

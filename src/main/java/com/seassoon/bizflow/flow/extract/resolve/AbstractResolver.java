@@ -1,9 +1,16 @@
 package com.seassoon.bizflow.flow.extract.resolve;
 
+import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.extra.Content;
 import com.seassoon.bizflow.core.model.ocr.Image;
+import com.seassoon.bizflow.core.util.ImgUtils;
+import com.seassoon.bizflow.support.BizFlowContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.awt.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +18,9 @@ import java.util.Map;
  * @author lw900925 (liuwei@seassoon.com)
  */
 public abstract class AbstractResolver implements Resolver {
+
+    @Autowired
+    private BizFlowProperties properties;
 
     @Override
     public Content resolve(Image image, Map<String, Object> params) {
@@ -38,5 +48,22 @@ public abstract class AbstractResolver implements Resolver {
         content.setSortProperty(extractPoint.getSortProperty());
         content.setDisplayProperty(extractPoint.getDisplayProperty());
         return content;
+    }
+
+    protected Path snapshot(Image image, List<List<Integer>> location) {
+        String recordId = BizFlowContextHolder.getInput().getRecordId();
+
+        // 截图坐标（x和y分别未起始位置的坐标，width和height分别为要截图的宽和高）
+        int x = location.get(0).get(1),
+                y = location.get(0).get(0),
+                width = location.get(1).get(1) - x,
+                height = location.get(1).get(0) - y;
+        Rectangle rectangle = new Rectangle(x, y, width, height);
+
+        // 截图保存位置（文件命名规则：起始宽-起始高_结束宽-结束高）
+        String strFilename = x + "-" + y + "_" + location.get(1).get(1) + "-" + location.get(1).get(0);
+        Path snapshot = Paths.get(properties.getLocalStorage(), recordId, "files/snapshot", image.getDocumentLabel(), image.getImageId(), strFilename);
+        ImgUtils.cut(Paths.get(image.getCorrected().getLocalPath()).toFile(), snapshot.toFile(), rectangle);
+        return snapshot;
     }
 }
