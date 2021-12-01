@@ -1,9 +1,14 @@
 package com.seassoon.bizflow.flow.extract.detect;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.model.element.Elements;
 import com.seassoon.bizflow.core.model.element.Item;
 import com.seassoon.bizflow.core.model.extra.Field;
+import org.checkerframework.checker.units.qual.A;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +19,7 @@ import java.util.stream.Collectors;
  * 手写签字{@link Detector}
  * @author lw900925 (liuwei@seassoon.com)
  */
+@Component
 public class HardWritingDetector extends DocElementDetector {
 
     @SuppressWarnings("unchecked")
@@ -26,13 +32,13 @@ public class HardWritingDetector extends DocElementDetector {
         }
 
         // 检测区域的坐标
-        List<List<Integer>> area = (List<List<Integer>>) params.get("area");
+        List<List<Integer>> detectArea = (List<List<Integer>>) params.get("detectArea");
         Double threshold = (Double) params.get("threshold");
         List<Item> hw = elements.getHw();
 
         List<Item> items = hw.stream().filter(item -> {
             List<List<Integer>> position = item.getPosition();
-            Double overlapArea = getIOT(position, area);
+            Double overlapArea = getIOT(position, detectArea);
             return overlapArea > threshold;
         }).collect(Collectors.toList());
 

@@ -1,6 +1,7 @@
 package com.seassoon.bizflow.flow.extract.detect;
 
 import cn.hutool.cache.impl.LRUCache;
+import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.component.HTTPCaller;
 import com.seassoon.bizflow.core.model.element.ElementResponse;
 import com.seassoon.bizflow.core.model.element.Elements;
@@ -11,7 +12,7 @@ import com.seassoon.bizflow.core.util.JSONUtils;
 import com.seassoon.bizflow.support.BizFlowContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +27,11 @@ import java.util.stream.Collectors;
  * @author lw900925 (liuwei@seassoon.com)
  */
 public abstract class DocElementDetector implements Detector {
+
+    @Autowired
+    private HTTPCaller httpCaller;
+    @Autowired
+    private BizFlowProperties properties;
 
     private static final Logger logger = LoggerFactory.getLogger(DocElementDetector.class);
 
@@ -49,9 +55,6 @@ public abstract class DocElementDetector implements Detector {
      * </pre>
      */
     private final LRUCache<String, Map<String, Elements>> ELEMENTS_CACHE = new LRUCache<>(20);
-
-    private ApplicationContext appContext;
-    private String url;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -98,10 +101,10 @@ public abstract class DocElementDetector implements Detector {
     }
 
     public Map<String, Elements> callAPI(List<Image> images) {
+        String strURL = properties.getIntegration().get(BizFlowProperties.Service.DOC_ELEMENT);
         Map<String, String> params = images.stream().collect(Collectors.toMap(image -> image.getImageId() + ".jpg", image -> image.getCorrected().getUrl()));
         String strQueryParam = JSONUtils.writeValueAsString(params);
-        String strUrl = this.url + "?" + strQueryParam;
-        HTTPCaller httpCaller = this.appContext.getBean(HTTPCaller.class);
+        String strUrl = strURL + "?" + strQueryParam;
         ElementResponse response = httpCaller.post(strUrl, new HashMap<>(), ElementResponse.class);
         if (!response.getStatus().equals("ok")) {
             logger.error("调用元素检测接口返回失败：{}", response);
@@ -153,13 +156,5 @@ public abstract class DocElementDetector implements Detector {
             yMax = Math.max(position.get(1).get(1), yMax);
         }
         return Arrays.asList(Arrays.asList(xMin, yMin), Arrays.asList(xMax, yMax));
-    }
-
-    public void setAppContext(ApplicationContext appContext) {
-        this.appContext = appContext;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
     }
 }
