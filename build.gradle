@@ -2,6 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '2.5.5'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
+	id 'jacoco'
 }
 
 group = 'com.seassoon'
@@ -37,4 +38,19 @@ dependencies {
 
 test {
 	useJUnitPlatform()
+}
+
+tasks.withType(Javadoc) {
+	options.addStringOption("Xdoclint:none", "-quiet")
+	options.addStringOption("encoding", "UTF-8")
+	options.addStringOption("charSet", "UTF-8")
+}
+
+// jacoco生成测试报告
+check.dependsOn(jacocoTestReport)
+jacocoTestReport {
+	reports {
+		xml.enabled(false)
+		html.enabled(true)
+	}
 }

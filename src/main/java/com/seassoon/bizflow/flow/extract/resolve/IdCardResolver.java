@@ -12,7 +12,6 @@ import com.seassoon.bizflow.core.model.extra.Field;
 import com.seassoon.bizflow.core.model.idcard.IdCard;
 import com.seassoon.bizflow.core.model.idcard.IdCardResponse;
 import com.seassoon.bizflow.core.model.ocr.Image;
-import com.seassoon.bizflow.core.model.ocr.Position;
 import com.seassoon.bizflow.core.util.ImgUtils;
 import com.seassoon.bizflow.support.BizFlowContextHolder;
 import org.slf4j.Logger;
@@ -23,11 +22,10 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
-import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * 身份证信息提取
