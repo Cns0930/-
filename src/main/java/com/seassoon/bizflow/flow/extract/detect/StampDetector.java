@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 日期检测/是否盖章/是否盖红章
@@ -106,8 +107,20 @@ public class StampDetector extends DocElementDetector{
      * @return
      */
     private Field detectRedStamp(Map<String, Object> params){
-        // TODO
-        return null;
+        // 其实先把结果筛一下label就好了
+        Elements elements = (Elements) params.get("elements");
+        if (elements != null) {
+            List<List<Integer>> detectArea = (List<List<Integer>>) params.get("detectArea");
+            Double threshold = (Double) params.get("threshold");
+            List<Item> stamp = elements.getStamp();
+            List<Item> redStamp = stamp.stream().filter( item -> item.getLabel()
+                    .equals(Item.Label.stamp_red.name())).collect(Collectors.toList());
+            List<List<Integer>> location = detectLocation(redStamp, detectArea, threshold);
+            if(location != null){
+                return Field.of("已盖红章", location, 1.0);
+            }
+        }
+        return Field.of("未盖红章", null, 1.0);
     }
 
     private List<List<Integer>> detectStampMatch(Map<String, Object> params) {
