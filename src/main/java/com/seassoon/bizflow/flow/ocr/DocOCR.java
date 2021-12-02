@@ -52,9 +52,9 @@ public class DocOCR implements OCR {
         String target = Paths.get(properties.getLocalStorage(), recordId, "/files/src").toString();
         List<Pair<String, String>> urls = images.stream()
                 .map(image -> {
-                    String strExtension = FileNameUtil.extName(image.getImageUrl());
+                    String strExtension = FileNameUtil.extName(image.getCorrectedImageUrl());
                     String strFilename = image.getImageId() + "." + strExtension;
-                    return Pair.of(strFilename, image.getImageUrl());
+                    return Pair.of(strFilename, image.getCorrectedImageUrl());
                 }).collect(Collectors.toList());
 
         List<String> files = fileDownloader.download(urls, target).stream().map(strPath -> {

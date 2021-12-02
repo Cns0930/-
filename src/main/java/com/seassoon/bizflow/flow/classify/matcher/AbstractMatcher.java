@@ -87,11 +87,15 @@ public abstract class AbstractMatcher implements Matcher {
         // 按pattern中包含的匹配次数匹配
         if (regex.length() > 2) {
             String strNumber = ReUtil.get(Pattern.compile("#[#0-9]$"), regex, 0);
-            // pattern末尾包含#开头且有数字部分
-            if (StrUtil.isNotBlank(strNumber) && ReUtil.isMatch(Pattern.compile(".*\\d+.*"), strNumber)) {
-                regex = regex.substring(0, regex.lastIndexOf("#"));
-                strNumber = ReUtil.replaceAll(strNumber, Pattern.compile("[^0-9]"), "");
-                return TextUtils.regexMatch(regex, content, Integer.parseInt(strNumber));
+            // pattern末尾包含#
+            if (StrUtil.isNotBlank(strNumber)) {
+                regex = regex.substring(0, regex.indexOf("#"));
+                //结尾有数字取对应数字 没数字取第一个匹配的值
+                if (ReUtil.isMatch(Pattern.compile(".*\\d+.*"), strNumber)) {
+                    strNumber = ReUtil.replaceAll(strNumber, Pattern.compile("[^0-9]"), "");
+                    return TextUtils.regexMatch(regex, content, Integer.parseInt(strNumber));
+                }
+                return TextUtils.regexMatch(regex, content, 1);
             }
         }
 
@@ -139,14 +143,16 @@ public abstract class AbstractMatcher implements Matcher {
         };
         for (long size : keywordSize) {
             long count = content.length() - size + 1;
-            Double score = Stream.iterate(0, n -> n + 1)
-                    .limit(count)
-                    .map(i -> content.substring(i, i + Long.valueOf(size).intValue()))
-                    .map(str -> TextUtils.jaroDistance(keyword, str))
-                    .max(Double::compareTo).orElse(0.00);
-            if (score > threshold) {
-                isMatch = true;
-                break;
+            if (count > 0) {
+                Double score = Stream.iterate(0, n -> n + 1)
+                        .limit(count)
+                        .map(i -> content.substring(i, i + Long.valueOf(size).intValue()))
+                        .map(str -> TextUtils.jaroDistance(keyword, str))
+                        .max(Double::compareTo).orElse(0.00);
+                if (score > threshold) {
+                    isMatch = true;
+                    break;
+                }
             }
         }
         return isMatch;
