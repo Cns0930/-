@@ -69,7 +69,7 @@ public class IdCardResolver extends AbstractResolver {
         String strPath = image.getCorrected().getLocalPath();
 
         // 返回的结果
-        Content content = mapToContent(image.getImageId(), extractPoint);
+        Content content = Content.of(image.getImageId(), extractPoint);
 
         // 计算截图区域并切图
         List<List<Integer>> location = ImgUtils.calcLocation(strPath, extractPoint.getInitPosition());

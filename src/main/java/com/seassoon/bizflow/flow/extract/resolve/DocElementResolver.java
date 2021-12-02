@@ -56,7 +56,7 @@ public class DocElementResolver extends AbstractResolver implements Initializing
         String strPath = image.getCorrected().getLocalPath();
 
         // 初始化返回值
-        Content content = mapToContent(image.getImageId(), extractPoint);
+        Content content = Content.of(image.getImageId(), extractPoint);
 
         // 获取对应的文档元素提取器
         String signSealId = extractPoint.getSignSealId();

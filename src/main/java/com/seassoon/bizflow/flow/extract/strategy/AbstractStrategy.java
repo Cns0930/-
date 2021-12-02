@@ -38,7 +38,7 @@ public abstract class AbstractStrategy implements UnifiedStrategy, InitializingB
     public void afterPropertiesSet() throws Exception {
         Map<String, Resolver> namedResolvers = appContext.getBeansOfType(Resolver.class);
         if (MapUtil.isEmpty(namedResolvers)) {
-            throw new NullPointerException("未找到提取工具Resolver，请检查配置是否正确");
+            throw new NullPointerException("没有可用的Resolver");
         }
         resolvers = new ArrayList<>(namedResolvers.values());
     }
@@ -52,7 +52,7 @@ public abstract class AbstractStrategy implements UnifiedStrategy, InitializingB
      * @param extractPoint {@link com.seassoon.bizflow.core.model.config.CheckpointConfig.ExtractPoint}
      * @return {@link Resolver}集合
      */
-    protected List<Resolver> matchResolvers(CheckpointConfig.ExtractPoint extractPoint) {
+    protected List<Resolver> forResolvers(CheckpointConfig.ExtractPoint extractPoint) {
         return resolvers.stream().filter(resolver -> resolver.support(extractPoint)).collect(Collectors.toList());
     }
 }
