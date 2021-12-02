@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import com.seassoon.bizflow.core.model.config.SortConfig;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -24,7 +25,7 @@ public class RegularMatcher extends AbstractMatcher {
         // 替换掉特殊字符
         String content = ReUtil.replaceAll(text, Pattern.compile(IGNORE_PATTERN), StrUtil.EMPTY);
         if (StrUtil.isNotBlank(text) && CollectionUtil.isNotEmpty(patterns)) {
-            return patterns.stream().anyMatch(pattern -> matchContext(pattern, content) != null);
+            return patterns.stream().anyMatch(pattern -> StringUtils.isNotEmpty(content) && matchContext(pattern, content) != null);
         } else {
             return false;
         }

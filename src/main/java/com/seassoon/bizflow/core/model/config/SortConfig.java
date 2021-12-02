@@ -5,10 +5,7 @@ import com.seassoon.bizflow.core.model.Input;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author lw900925 (liuwei@seassoon.com)
@@ -31,5 +28,13 @@ public class SortConfig {
         private List<String> except = new ArrayList<>();
         private Integer page;
         private Integer totalPages;
+
+        public void setPage(Integer page) {
+            this.page = Objects.isNull(page) ? -1 : page;
+        }
+
+        public void setTotalPages(Integer totalPages) {
+            this.totalPages = Objects.isNull(totalPages) ? -1 : totalPages;
+        }
     }
 }

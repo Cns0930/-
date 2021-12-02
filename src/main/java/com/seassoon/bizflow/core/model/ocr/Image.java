@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -12,7 +13,7 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode
-public class Image {
+public class Image implements Cloneable {
     private String imageId;
     private String imageUrl;
     private String documentName;
@@ -41,5 +42,22 @@ public class Image {
         private Double rotationAngle;   // 矫正后图片的旋转角度
         @JsonIgnore
         private String localPath;       // 矫正后图片本地存储路径
+    }
+
+    public void saveResult(Image image, String documentLabel, Integer documentPage, Integer totalPages) {
+        image.setDocumentLabel(documentLabel);
+        image.setDocumentPage(documentPage);
+        image.setTotalPages(totalPages);
+    }
+
+    @Override
+    public Image clone() {
+        Image image = null;
+        try {
+            image = (Image) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return image;
     }
 }

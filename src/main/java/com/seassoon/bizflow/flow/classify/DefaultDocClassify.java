@@ -1,17 +1,18 @@
 package com.seassoon.bizflow.flow.classify;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.model.extra.ExtraKVInfo;
 import com.seassoon.bizflow.core.model.extra.FieldKV;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.model.config.SortConfig;
 import com.seassoon.bizflow.core.model.extra.Document;
-import com.seassoon.bizflow.core.model.extra.ExtraInfo;
 import com.seassoon.bizflow.core.model.ocr.Block;
 import com.seassoon.bizflow.core.model.ocr.OcrOutput;
 import com.seassoon.bizflow.core.model.ocr.OcrResult;
 import com.seassoon.bizflow.core.model.ocr.Position;
+import com.seassoon.bizflow.core.util.Collections3;
 import com.seassoon.bizflow.core.util.TextUtils;
 import com.seassoon.bizflow.flow.classify.matcher.*;
 import org.apache.commons.lang3.RegExUtils;
@@ -19,11 +20,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
+import javax.print.DocFlavor;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,7 +53,9 @@ public class DefaultDocClassify implements DocClassify {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultDocClassify.class);
 
-    /** 文档分类匹配器 */
+    /**
+     * 文档分类匹配器
+     */
     private final Map<String, Matcher> MATCHERS = new HashMap<>();
 
     @Autowired
@@ -74,34 +82,33 @@ public class DefaultDocClassify implements DocClassify {
                         .filter(document -> "-999".equals(document.getDocumentLabel()))
                         .findAny())
                 .orElse(null);
-        Map<String, List<SortConfig.TypeIdField>> typeIdField = simplifyTypeIdField(origTypeIdField, xDoc);
+        Map<String, Map<String, List<List<SortConfig.TypeIdField>>>> typeIdField = simplifyTypeIdField(origTypeIdField, xDoc);
 
         // 整理并分组图片OCR结果（按照图片ID分组）
         Map<String, List<String>> docTexts = ocrOutputs.stream().collect(Collectors.toMap(OcrOutput::getImageName, ocrOutput ->
                 ocrOutput.getOcrResult().getBlocks().stream().map(Block::getText).collect(Collectors.toList())));
-
+        //用与后面判断分类是否正确 先复制一份
+        List<Image> copyImages = images.stream().map(image -> image.clone()).collect(Collectors.toList());
         // 文档标题
-        Map<String, String> docTitles = ocrOutputs.stream().collect(Collectors.toMap(OcrOutput::getImageName, ocrOutput ->
-                getTitle(ocrOutput.getOcrResultWithoutLineMerge())));
-
+        Map<String, Object> docTitles = Collections3.parseMapForFilter(ocrOutputs.stream().collect(Collectors.toMap(OcrOutput::getImageName, ocrOutput ->
+                getTitle(ocrOutput.getOcrResultWithoutLineMerge()))));
         // 初始化计数器
         AtomicInteger skipAI = new AtomicInteger(0),
                 classifiedAI = new AtomicInteger(0);
 
         // 图片分类
         images.forEach(image -> {
-
-            // 如果材料来源是超级帮办并且有分类，跳过分类
+//            // 如果材料来源是超级帮办并且有分类，跳过分类
             if (image.getDocumentSource() == 1 && !image.getDocumentLabel().equals("0")
                     && image.getDocumentPage() != null && image.getTotalPages() != null) {
                 // 分类配置
-                List<SortConfig.TypeIdField> typeIdFields = typeIdField.get(image.getDocumentLabel());
+                List<List<SortConfig.TypeIdField>> typeIdFields = origTypeIdField.get(image.getDocumentLabel());
                 if (CollectionUtil.isNotEmpty(typeIdFields)) {
-                    if (typeIdFields.stream().anyMatch(field -> field.getTotalPages() == -1)) {
+                    if (typeIdFields.stream().anyMatch(field -> field.stream().anyMatch(f -> f.getTotalPages() == -1))) {
                         // 单页材料
                         image.setDocumentPage(-1);
                         image.setTotalPages(-1);
-                    } else if (typeIdFields.stream().anyMatch(field -> field.getPage() == 999)) {
+                    } else if (typeIdFields.stream().anyMatch(field -> field.stream().anyMatch(f -> f.getPage() == 999))) {
                         // 尾页包含多页
                         Integer documentPage = image.getDocumentPage().equals(image.getTotalPages()) ? 999 : -1;
                         image.setDocumentPage(documentPage);
@@ -120,27 +127,17 @@ public class DefaultDocClassify implements DocClassify {
 
                 // 获取图片OCR结果，进行分类
                 List<String> texts = docTexts.get(image.getImageId());
-                typeIdField.forEach((key, value) -> value.forEach(field -> {
-                    // 获取对应的Matcher
-                    Matcher matcher = MATCHERS.get(field.getMethod());
-                    if (matcher == null) {
-                        logger.error("分类{}配置错误，未找到对应的匹配器：{}", key, field);
-                    } else {
-                        if (matcher.match(field, texts)) {
-                            // 根据标题相似度匹配
-                            Double matchThreshold = properties.getAlgorithm().getMatchThreshold();
-                            Optional.ofNullable(docTitles.get(image.getImageId())).ifPresent(title -> {
-                                boolean isMatchTitle = field.getPattern().stream()
-                                        .anyMatch(pattern -> TextUtils.similarity(pattern, title, matchThreshold) > matchThreshold);
+                // 根据ocr结果-规则进行分类；
+                matchClassif(image, typeIdField.get("R"), texts, docTitles, copyImages);
+                // 根据调用结构化数据中的字段进行额外补充细分;
+                if ("0".equals(image.getDocumentLabel()) && !CollectionUtils.isEmpty(typeIdField.get("X"))) {
+                    matchClassif(image, typeIdField.get("X"), texts, docTitles, copyImages);
+                }
+                // step2. 获取身份证复印件，驾驶证分类 特殊分类
 
-                            });
-                        }
-                    }
-                }));
             }
         });
-
-        return null;
+        return images;
     }
 
     /**
@@ -149,14 +146,14 @@ public class DefaultDocClassify implements DocClassify {
      * @param typeIdField 分类配置
      * @return 分组后的分类配置，Key：R表示正常分类配置，X表示包含排除字段和辅助字段的配置
      */
-    private Map<String, List<SortConfig.TypeIdField>> simplifyTypeIdField(Map<String, List<List<SortConfig.TypeIdField>>> typeIdField, Document xDoc) {
+    private Map<String, Map<String, List<List<SortConfig.TypeIdField>>>> simplifyTypeIdField(Map<String, List<List<SortConfig.TypeIdField>>> typeIdField, Document xDoc) {
         // 重新整理分类配置的结构，使其更容易操作（太乱了，套了好几层）
-        Map<String, List<SortConfig.TypeIdField>> simplifyMap = typeIdField.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> entry.getValue().stream().flatMap(Collection::stream).collect(Collectors.toList())));
+//        Map<String, List<SortConfig.TypeIdField>> simplifyMap = typeIdField.entrySet().stream()
+//                .collect(Collectors.toMap(
+//                        Map.Entry::getKey,
+//                        entry -> entry.getValue().stream().flatMap(Collection::stream).collect(Collectors.toList())));
 
-        // 对整理后的分类配置进行分组，分为key为R的正常配置和key为X的含有排除/辅助字段的配置
+//         对整理后的分类配置进行分组，分为key为R的正常配置和key为X的含有排除/辅助字段的配置
 //        Map<String, Map<String, List<SortConfig.TypeIdField>>> grouped = simplifyMap.entrySet().stream()
 //                .collect(Collectors.groupingBy(entry -> entry.getValue().stream().anyMatch(field -> {
 //                    // 分组逻辑：pattern或except任何字段中含有x_的值，就表示包含辅助字段
@@ -166,14 +163,29 @@ public class DefaultDocClassify implements DocClassify {
 //                }) ? "X" : "R")).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry ->
 //                        // 分组后转化value的值为Map，其中key为documentLabel，value为分类配置
 //                        entry.getValue().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+        Map<String, Map<String, List<List<SortConfig.TypeIdField>>>> grouped = new HashMap<>();
+        Map<String, List<List<SortConfig.TypeIdField>>> RtypeIdField = new LinkedHashMap<>();
+        Map<String, List<List<SortConfig.TypeIdField>>> XtypeIdField = new LinkedHashMap<>();
+        typeIdField.keySet().forEach(key -> {
+            List<List<SortConfig.TypeIdField>> typeId = typeIdField.get(key);
+            if (typeId.stream().anyMatch(f -> f.stream().anyMatch(field ->
+                    field.getExcept().stream().anyMatch(except -> except.startsWith("x_")) ||
+                            field.getPattern().stream().anyMatch(pattern -> pattern.startsWith("x_"))))) {
+                XtypeIdField.put(key, typeId);
+            } else {
+                RtypeIdField.put(key, typeId);
+            }
+        });
+        grouped.put("X", XtypeIdField);
+        grouped.put("R", RtypeIdField);
 
         // 如果没有排除字段或辅助字段，直接返回（结构化数据不存在也直接返回）
-//        if (grouped.get("X") == null || grouped.get("X").size() == 0 || CollectionUtil.isEmpty(extraInfo.getExtraKvInfo())) {
-//            return grouped;
-//        }
+        if (grouped.get("X") == null || grouped.get("X").size() == 0 || Objects.isNull(xDoc)) {
+            return grouped;
+        }
 
         // 结构化数据，来源于cjbb，且document_label包含-999
-//        ExtraKVInfo extraKVInfo = extraInfo.getExtraKvInfo().get(0);
+//        ExtraKVInfo extraKVInfo = xDoc.getFieldVal().get(0);
 //        Document xDoc = null;
 //        if ("cjbb".equals(extraKVInfo.getSource())) {
 //            xDoc = extraKVInfo.getDocumentList().stream()
@@ -183,56 +195,71 @@ public class DefaultDocClassify implements DocClassify {
 
         // 结构化数据中没有-999的字段，移除辅助字段和排除字段并返回
         if (xDoc == null) {
-            simplifyMap.forEach((key, value) -> value.forEach(field -> {
-                // 过滤掉辅助字段和排除字段中x_的字段名
-                field.setPattern(field.getPattern().stream().filter(str -> !str.startsWith("x_")).collect(Collectors.toList()));
-                field.setExcept(field.getExcept().stream().filter(str -> !str.startsWith("x_")).collect(Collectors.toList()));
-            }));
-//            grouped.get("X").forEach((key, value) -> value.forEach(field -> {
+//             simplifyMap.forEach((key, value) -> value.forEach(field -> {
 //                // 过滤掉辅助字段和排除字段中x_的字段名
 //                field.setPattern(field.getPattern().stream().filter(str -> !str.startsWith("x_")).collect(Collectors.toList()));
 //                field.setExcept(field.getExcept().stream().filter(str -> !str.startsWith("x_")).collect(Collectors.toList()));
 //            }));
-            return simplifyMap;
+            grouped.get("X").forEach((key, value) -> value.forEach(field -> {
+                field.forEach(f -> {
+                    // 过滤掉辅助字段和排除字段中x_的字段名
+                    f.setPattern(f.getPattern().stream().filter(str -> !str.startsWith("x_")).collect(Collectors.toList()));
+                    f.setExcept(f.getExcept().stream().filter(str -> !str.startsWith("x_")).collect(Collectors.toList()));
+                });
+            }));
+            return grouped;
         }
 
         // 根据结构化数据替换分类配置：辅助字段"x_委托人姓名"替换为"张三"，排除字段"x_委托人姓名"替换为"x_张三"
         List<FieldKV> xDocFieldKV = xDoc.getFieldVal();
-        simplifyMap.forEach((key, value) -> value.forEach(field -> {
-            // 辅助字段中包含x_开头，将method设置为extra
-            if (field.getPattern().stream().anyMatch(str -> str.startsWith("x_"))) {
-                field.setMethod("extra");
-
-                // 替换为结构化数据里的值
-                xDocFieldKV.forEach(kv -> {
-                    field.setPattern(replaceFieldValue(field.getPattern(), kv, str -> str));
-                    field.setExcept(replaceFieldValue(field.getExcept(), kv, str -> "x_" + str));
-                });
-            }
-        }));
-        return simplifyMap;
-//        grouped.get("X").forEach((key, value) -> value.forEach(field -> {
+//        simplifyMap.forEach((key, value) -> value.forEach(field -> {
 //            // 辅助字段中包含x_开头，将method设置为extra
-//            if (field.getPattern().stream().anyMatch(str -> str.startsWith("x_"))) {
+//            if (field.getPattern().stream().anyMatch(str -> str.startsWith("x_")) || field.getExcept().stream().anyMatch(str -> str.startsWith("x_"))) {
 //                field.setMethod("extra");
+//                // 替换为结构化数据里的值
+//                xDocFieldKV.forEach(kv -> {
+//                    field.setPattern(replaceFieldValue(field.getPattern(), kv, str -> str));
+//                    field.setExcept(replaceFieldValue(field.getExcept(), kv, str -> "x_" + str));
+//                });
 //            }
-//
-//            // 替换为结构化数据里的值
-//            xDocFieldVal.forEach(fieldVal -> {
-//                field.setPattern(replaceFieldValue(field.getPattern(), fieldVal, str -> str));
-//                field.setExcept(replaceFieldValue(field.getExcept(), fieldVal, str -> "x_" + str));
-//            });
 //        }));
+        grouped.get("X").forEach((key, value) -> value.forEach(f -> {
+            f.forEach(field -> {
+                // 辅助字段中包含x_开头，将method设置为extra
+                if (field.getPattern().stream().anyMatch(str -> str.startsWith("x_")) || field.getExcept().stream().anyMatch(str -> str.startsWith("x_"))) {
+                    field.setMethod("extra");
+                }
+                // 替换为结构化数据里的值
+                xDocFieldKV.forEach(fieldVal -> {
+                    field.setPattern(replaceFieldValue(field.getPattern(), fieldVal, str -> str));
+                    field.setExcept(replaceFieldValue(field.getExcept(), fieldVal, str -> "x_" + str));
+                });
+            });
+        }));
 
-//        return grouped;
+        //删掉没有匹配到结构化数据的配置信息
+        List<Object> kvinfo = xDocFieldKV.stream().map(FieldKV::getVal).collect(Collectors.toList());
+        grouped.get("X").forEach((key, value) -> value.forEach(info -> {
+            info.forEach(field -> {
+                if (field.getPattern().stream().anyMatch(str -> str.startsWith("x_"))) {
+                    field.setPattern(field.getPattern().stream().filter(str -> !str.startsWith("x_")).collect(Collectors.toList()));
+                }
+                if (field.getExcept().stream().anyMatch(str -> str.startsWith("x_"))) {
+                    field.setExcept(field.getExcept().stream().filter(str ->
+                            !str.startsWith("x_") ||
+                                    !CollectionUtils.isEmpty(kvinfo.stream().filter(f -> f.toString().contains(str.substring(str.lastIndexOf("_") + 1, str.length()))).collect(Collectors.toList()))).collect(Collectors.toList()));
+                }
+            });
+        }));
+        return grouped;
     }
 
     /**
      * 替换分类配置中Pattern和Except的辅助字段和排除字段
      *
-     * @param fields   pattern或者except值
+     * @param fields  pattern或者except值
      * @param fieldKV 结构化数据-999中的部分
-     * @param mapper   替换逻辑，由使用者提供实现
+     * @param mapper  替换逻辑，由使用者提供实现
      * @return 替换后的pattern或except
      */
     private List<String> replaceFieldValue(List<String> fields, FieldKV fieldKV, Function<String, String> mapper) {
@@ -376,5 +403,71 @@ public class DefaultDocClassify implements DocClassify {
             boolean positionCheck = p.get(1).getX() - p.get(0).getX() > p.get(2).getY() - p.get(1).getY();
             return textCheck && positionCheck;
         });
+    }
+
+    /**
+     * 匹配分类信息
+     *
+     * @param image       图片分类信息
+     * @param typeIdField 配置信息(存在普通分类和补充分类)
+     */
+    private void matchClassif(Image image, Map<String, List<List<SortConfig.TypeIdField>>> typeIdField, List<String> texts, Map<String, Object> docTitles, List<Image> copyImages) {
+        for (String typeId : typeIdField.keySet()) {
+            List<List<SortConfig.TypeIdField>> typeIdFieldInfoList = typeIdField.get(typeId);
+            //匹配
+            match(image, typeIdFieldInfoList, texts, typeId, docTitles, copyImages);
+        }
+    }
+
+    /**
+     * @param image               分类图片
+     * @param typeIdFieldInfoList 配置列表
+     * @param texts               ocr
+     * @param typeId              材料
+     * @param docTitles           图片标题
+     * @param copyImages          copy的图片信息
+     */
+    public void match(Image image, List<List<SortConfig.TypeIdField>> typeIdFieldInfoList, List<String> texts, String typeId, Map<String, Object> docTitles, List<Image> copyImages) {
+        for (List<SortConfig.TypeIdField> field : typeIdFieldInfoList) {
+            AtomicReference<Boolean> isMatch = new AtomicReference<>(false);
+            AtomicReference<Integer> documentPage = new AtomicReference<>(0);
+            AtomicReference<Integer> totalPages = new AtomicReference<>(0);
+            for (SortConfig.TypeIdField f : field) {
+                Matcher matcher = MATCHERS.get(f.getMethod());
+                //一组数据必须全部满足
+                if (!matcher.match(f, texts)) {
+                    return;
+                }
+                isMatch.set(matcher.match(f, texts));
+                documentPage.set(f.getPage());
+                totalPages.set(f.getTotalPages());
+            }
+            if (isMatch.get()) {
+                if (!"0".equals(image.getDocumentLabel())) {
+                    Double matchThreshold = properties.getAlgorithm().getMatchThreshold();
+                    Optional.ofNullable(docTitles.get(image.getImageId())).ifPresent(title -> {
+                        // 如果又多个分类匹配是否更像标题 不知道这里为什么拿最后一个
+                        boolean isMatchTitle = field.get(field.size() - 1).getPattern().stream()
+                                .anyMatch(pattern ->
+                                        TextUtils.similarity(pattern, title.toString(), matchThreshold) > matchThreshold);
+                        if (isMatchTitle) {
+                            image.saveResult(image, typeId, documentPage.get(), totalPages.get());
+                        }
+                    });
+                } else {
+                    image.saveResult(image, typeId, documentPage.get(), totalPages.get());
+                }
+                //判断分类是否正确 如果是帮办数据判断是否与传入的类别一致  # 若自备，传入的有类别，且传入类别和程序分类结果不一致
+                copyImages.stream().filter(f -> f.getImageId().equals(image.getImageId())).findAny().ifPresent(img -> {
+                    if (img.getDocumentSource() == 0 && !"0".equals(img.getDocumentLabel()) && !typeId.equals(img.getDocumentLabel())) {
+                        logger.info("图片{}分类结果存在不一致：{}||{}  ", image.getImageId(), image.getDocumentLabel(), typeId);
+                        image.saveResult(image, "-1", 0, 0);
+                    } else if (img.getDocumentSource() == 0 && "0".equals(img.getDocumentLabel()) && typeId.equals(img.getDocumentLabel())) {
+                        image.saveResult(image, typeId, documentPage.get(), totalPages.get());
+                    }
+                });
+                break;
+            }
+        }
     }
 }
