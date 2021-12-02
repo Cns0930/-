@@ -6,6 +6,7 @@ import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import com.seassoon.bizflow.core.model.config.SortConfig;
 import com.seassoon.bizflow.core.util.TextUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -36,7 +37,7 @@ public abstract class AbstractMatcher implements Matcher {
                         if (StrUtil.isNotBlank(match)) {
                             // 用正则匹配一次
                             String content = ReUtil.replaceAll(str, Pattern.compile(IGNORE_PATTERN), StrUtil.EMPTY);
-                            isMatch = matchContext(match, content) != null;
+                            isMatch = StringUtils.isNotEmpty(content) && matchContext(match, content) != null;
                         }
                     }
                     return isMatch;
