@@ -1,6 +1,7 @@
 package com.seassoon.bizflow.flow.extract.detect;
 
 import com.seassoon.bizflow.core.model.extra.Field;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
@@ -9,6 +10,7 @@ import java.util.Map;
  * @author chimney
  * @date 2021/12/1
  */
+@Component
 public class CheckboxDetector extends DocElementDetector{
 
 

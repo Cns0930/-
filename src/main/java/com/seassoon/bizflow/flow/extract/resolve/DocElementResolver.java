@@ -7,15 +7,14 @@ import com.seassoon.bizflow.core.model.extra.Content;
 import com.seassoon.bizflow.core.model.extra.Field;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.util.ImgUtils;
-import com.seassoon.bizflow.flow.extract.detect.Detector;
-import com.seassoon.bizflow.flow.extract.detect.DocElementDetector;
-import com.seassoon.bizflow.flow.extract.detect.HandwritingDetector;
+import com.seassoon.bizflow.flow.extract.detect.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -46,6 +45,15 @@ public class DocElementResolver extends AbstractResolver implements Initializing
     public void afterPropertiesSet() throws Exception {
         // 初始化文档元素提取实例
         SEAL_ID_DETECTOR_MAP.put("1", appContext.getBean(HandwritingDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("3", appContext.getBean(StampDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("4", appContext.getBean(AttachDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("7", appContext.getBean(HandwritingDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("13", appContext.getBean(CheckboxDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("14", appContext.getBean(StampDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("15_right", appContext.getBean(CheckboxDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("15_left", appContext.getBean(CheckboxDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("16", appContext.getBean(AttachDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("17", appContext.getBean(StampDetector.class));
     }
 
     @Override
@@ -67,7 +75,7 @@ public class DocElementResolver extends AbstractResolver implements Initializing
                     formTypeId, extractPoint.getDocumentField(), signSealId);
             return content;
         }
-        Detector detector = appContext.getBean(signSealIdEnum.getDetector());
+        Detector detector = SEAL_ID_DETECTOR_MAP.get(signSealId);
 
         // 补充参数
         params.put("signSealId", signSealId);
