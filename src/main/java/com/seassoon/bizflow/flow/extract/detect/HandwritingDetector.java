@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * @author lw900925 (liuwei@seassoon.com)
  */
 @Component
-public class HardWritingDetector extends DocElementDetector {
+public class HandwritingDetector extends DocElementDetector {
 
     @SuppressWarnings("unchecked")
     @Override
