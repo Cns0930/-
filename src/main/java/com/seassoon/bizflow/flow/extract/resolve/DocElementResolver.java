@@ -9,7 +9,7 @@ import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.util.ImgUtils;
 import com.seassoon.bizflow.flow.extract.detect.Detector;
 import com.seassoon.bizflow.flow.extract.detect.DocElementDetector;
-import com.seassoon.bizflow.flow.extract.detect.HardWritingDetector;
+import com.seassoon.bizflow.flow.extract.detect.HandwritingDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -29,7 +29,7 @@ public class DocElementResolver extends AbstractResolver implements Initializing
 
     private static final Logger logger = LoggerFactory.getLogger(DocElementDetector.class);
 
-    private final Map<String, Detector> SEAL_ID_DETECTOR_MAP = new HashMap<>();
+//    private final Map<String, Detector> SEAL_ID_DETECTOR_MAP = new HashMap<>();
     private final static Integer expand = 30;
 
     @Autowired
@@ -37,6 +37,11 @@ public class DocElementResolver extends AbstractResolver implements Initializing
     @Autowired
     private ApplicationContext appContext;
 
+//    @PostConstruct
+//    private void postConstruct() {
+//        // 初始化文档元素提取实例
+//        SEAL_ID_DETECTOR_MAP.put("1", appContext.getBean(HandwritingDetector.class));
+//    }
     @Override
     public void afterPropertiesSet() throws Exception {
         // 初始化文档元素提取实例
@@ -55,14 +60,18 @@ public class DocElementResolver extends AbstractResolver implements Initializing
 
         // 获取对应的文档元素提取器
         String signSealId = extractPoint.getSignSealId();
-        Detector detector = SEAL_ID_DETECTOR_MAP.get(signSealId);
-        if (detector == null) {
-            logger.error("未找到对应的文档元素提取器（Detector），请检查checkpoint配置：formTypeId={}, field={}, signSealId={}",
+        CheckpointConfig.ExtractPoint.SignSealId signSealIdEnum =
+                CheckpointConfig.ExtractPoint.SignSealId.getByValue((String) params.get("signSealId"));
+        if (signSealIdEnum == null) {
+            logger.error("未找到对应的文档元素提取器，请检查checkpoint配置：formTypeId={}, field={}, signSealId={}",
                     formTypeId, extractPoint.getDocumentField(), signSealId);
             return content;
         }
+        Detector detector = appContext.getBean(signSealIdEnum.getDetector());
 
         // 补充参数
+        params.put("signSealId", signSealId);
+        params.put("imageId", image.getImageId());
         params.put("threshold", properties.getAlgorithm().getElementMatchThreshold());
         // 计算检测位置的坐标，并切图
         List<List<Integer>> location = ImgUtils.calcLocation(strPath, extractPoint.getInitPosition());
@@ -99,6 +108,6 @@ public class DocElementResolver extends AbstractResolver implements Initializing
         if (StrUtil.isBlank(signSealId) || !extractPoint.getValueType().equals("img")) {
             return false;
         }
-        return SEAL_ID_DETECTOR_MAP.containsKey(signSealId);
+        return CheckpointConfig.ExtractPoint.SignSealId.getByValue(signSealId) != null;
     }
 }

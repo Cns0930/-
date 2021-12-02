@@ -1,6 +1,7 @@
 package com.seassoon.bizflow.flow.extract.detect;
 
 import cn.hutool.cache.impl.LRUCache;
+import cn.hutool.core.collection.CollectionUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.component.HTTPCaller;
 import com.seassoon.bizflow.core.model.element.ElementResponse;
@@ -156,5 +157,21 @@ public abstract class DocElementDetector implements Detector {
             yMax = Math.max(position.get(1).get(1), yMax);
         }
         return Arrays.asList(Arrays.asList(xMin, yMin), Arrays.asList(xMax, yMax));
+    }
+
+    protected List<List<Integer>> detectLocation(List<Item> items, List<List<Integer>> detectArea, Double threshold){
+        items = items.stream().filter(item -> {
+            List<List<Integer>> position = item.getPosition();
+            Double overlapArea = getIOT(position, detectArea);
+            return overlapArea > threshold;
+        }).collect(Collectors.toList());
+        if (CollectionUtil.isNotEmpty(items)) {
+            List<List<Integer>> position = merge(items);
+            return Arrays.asList(
+                    Arrays.asList(position.get(0).get(1), position.get(0).get(0)),
+                    Arrays.asList(position.get(1).get(1), position.get(1).get(0)));
+        } else {
+            return null;
+        }
     }
 }

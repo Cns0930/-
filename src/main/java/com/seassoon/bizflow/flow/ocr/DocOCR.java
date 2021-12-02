@@ -158,7 +158,7 @@ public class DocOCR implements OCR {
      * @param ocrResult {@link OcrResult}
      * @return 排序后的 {@link OcrResult}
      */
-    private OcrResult sortBlock(OcrResult ocrResult) {
+    public OcrResult sortBlock(OcrResult ocrResult) {
         int threshold = properties.getAlgorithm().getDotCoincide();
         List<Block> blocks = ocrResult.getBlocks();
         for (int i = 0; i < blocks.size(); i++) {

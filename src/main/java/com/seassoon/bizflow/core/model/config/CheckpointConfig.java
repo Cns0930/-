@@ -1,7 +1,8 @@
 package com.seassoon.bizflow.core.model.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.seassoon.bizflow.core.model.Input;
+import com.seassoon.bizflow.flow.extract.detect.*;
+import javafx.scene.control.CheckBox;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -50,6 +51,54 @@ public class CheckpointConfig {
         public static class CutImgTag {
             private String pattern;
             private String method;
+        }
+
+        public enum SignSealId {
+            HANDWRITING("1", HandwritingDetector.class),
+            FILL_DATE("3", StampDetector.class),
+            ATTACH_ID("4", AttachDetector.class),
+            FILL("7", HandwritingDetector.class),
+
+            CHECKBOX("13", CheckboxDetector.class),
+            STAMP_NEW("14", StampDetector.class),
+            CHECK_RIGHT("15_right", CheckboxDetector.class),
+            CHECK_LEFT("15_left", CheckboxDetector.class),
+            ATTACH_PHOTO("16", AttachDetector.class),
+            STAMP_RED("17", StampDetector.class),
+
+            ;
+            private String value;
+            private Class<? extends Detector> detector;
+
+            public String getValue() {
+                return value;
+            }
+
+            public void setValue(String value) {
+                this.value = value;
+            }
+
+            public Class<? extends Detector> getDetector() {
+                return detector;
+            }
+
+            public void setDetector(Class<? extends Detector> detector) {
+                this.detector = detector;
+            }
+
+            SignSealId(String value, Class<? extends Detector> detector) {
+                this.value = value;
+                this.detector = detector;
+            }
+
+            public static SignSealId getByValue(String value){
+                for(SignSealId signSealId : values()){
+                    if(signSealId.getValue().equals(value)){
+                        return signSealId;
+                    }
+                }
+                return null;
+            }
         }
     }
 }
