@@ -23,7 +23,7 @@ public abstract class AbstractResolver implements Resolver {
     private BizFlowProperties properties;
 
     @Override
-    public Content resolve(Image image, Map<String, Object> params) {
+    public Content resolve(Map<String, Object> params) {
         return null;
     }
 
@@ -50,6 +50,13 @@ public abstract class AbstractResolver implements Resolver {
         return content;
     }
 
+    /**
+     * 对图片指定位置截图
+     *
+     * @param image    图片{@link Image}对象
+     * @param location 截图位置
+     * @return 截图后保存路径
+     */
     protected Path snapshot(Image image, List<List<Integer>> location) {
         String recordId = BizFlowContextHolder.getInput().getRecordId();
 
@@ -60,8 +67,8 @@ public abstract class AbstractResolver implements Resolver {
                 height = location.get(1).get(0) - y;
         Rectangle rectangle = new Rectangle(x, y, width, height);
 
-        // 截图保存位置（文件命名规则：起始宽-起始高_结束宽-结束高）
-        String strFilename = x + "-" + y + "_" + location.get(1).get(1) + "-" + location.get(1).get(0);
+        // 截图保存位置（文件命名规则：起始高-起始宽_结束高-结束宽）
+        String strFilename = y + "-" + x + "_" + location.get(1).get(0) + "-" + location.get(1).get(1);
         Path snapshot = Paths.get(properties.getLocalStorage(), recordId, "files/snapshot", image.getDocumentLabel(), image.getImageId(), strFilename);
         ImgUtils.cut(Paths.get(image.getCorrected().getLocalPath()).toFile(), snapshot.toFile(), rectangle);
         return snapshot;

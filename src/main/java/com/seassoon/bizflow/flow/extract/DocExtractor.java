@@ -13,7 +13,9 @@ import com.seassoon.bizflow.flow.extract.tools.TableCutter;
 import com.seassoon.bizflow.support.BizFlowContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -28,7 +30,7 @@ import java.util.stream.Collectors;
  * @author lw900925 (liuwei@seassoon.com)
  */
 @Component
-public class DocExtractor implements Extractor {
+public class DocExtractor implements Extractor, InitializingBean {
 
     /**
      * logger
@@ -43,11 +45,11 @@ public class DocExtractor implements Extractor {
     @Autowired
     private BizFlowProperties properties;
     @Autowired
-    private TableCutter tableCutter;
+    private ApplicationContext appContext;
 
-    @PostConstruct
-    private void postConstruct() {
-        strategyMap.put("info_extract.strategies.UnifiedStrategy_single_page", new SinglePageStrategy());
+    @Override
+    public void afterPropertiesSet() {
+        strategyMap.put("info_extract.strategies.UnifiedStrategy_single_page", appContext.getBean(SinglePageStrategy.class));
     }
 
     @Override

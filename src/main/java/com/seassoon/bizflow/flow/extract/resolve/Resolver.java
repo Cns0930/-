@@ -16,11 +16,10 @@ public interface Resolver {
     /**
      * 提取图片中的信息
      *
-     * @param image  {@link Image}
      * @param params 参数
      * @return {@link Content}
      */
-    Content resolve(Image image, Map<String, Object> params);
+    Content resolve(Map<String, Object> params);
 
     /**
      * 根据{@link CheckpointConfig.ExtractPoint}判断是否支持这个提取器

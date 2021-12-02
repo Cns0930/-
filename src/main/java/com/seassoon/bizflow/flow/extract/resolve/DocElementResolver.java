@@ -44,7 +44,8 @@ public class DocElementResolver extends AbstractResolver implements Initializing
     }
 
     @Override
-    public Content resolve(Image image, Map<String, Object> params) {
+    public Content resolve(Map<String, Object> params) {
+        Image image = (Image) params.get("image");
         String formTypeId = (String) params.get("formTypeId");
         CheckpointConfig.ExtractPoint extractPoint = (CheckpointConfig.ExtractPoint) params.get("extractPoint");
         String strPath = image.getCorrected().getLocalPath();
@@ -62,7 +63,6 @@ public class DocElementResolver extends AbstractResolver implements Initializing
         }
 
         // 补充参数
-        params.put("imageId", image.getImageId());
         params.put("threshold", properties.getAlgorithm().getElementMatchThreshold());
         // 计算检测位置的坐标，并切图
         List<List<Integer>> location = ImgUtils.calcLocation(strPath, extractPoint.getInitPosition());

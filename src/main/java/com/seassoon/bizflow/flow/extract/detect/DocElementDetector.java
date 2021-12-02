@@ -59,13 +59,13 @@ public abstract class DocElementDetector implements Detector {
     @SuppressWarnings("unchecked")
     @Override
     public Field detect(Map<String, Object> params) {
-
-        // 获取文档元素检测结果
+        // 获取参数
+        Image image = (Image) params.get("image");
         String formTypeId = (String) params.get("formTypeId");
-        String imageId = (String) params.get("imageId");
         List<Image> images = (List<Image>) params.get("images");
 
-        Elements elements = getElements(formTypeId, imageId, images);
+        // 获取文档元素检测结果
+        Elements elements = getElements(formTypeId, image.getImageId(), images);
         params.put("elements", elements);
         return detectField(params);
     }
