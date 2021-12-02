@@ -14,7 +14,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -36,11 +35,6 @@ public class DocElementResolver extends AbstractResolver implements Initializing
     @Autowired
     private ApplicationContext appContext;
 
-//    @PostConstruct
-//    private void postConstruct() {
-//        // 初始化文档元素提取实例
-//        SEAL_ID_DETECTOR_MAP.put("1", appContext.getBean(HandwritingDetector.class));
-//    }
     @Override
     public void afterPropertiesSet() throws Exception {
         // 初始化文档元素提取实例
@@ -116,6 +110,6 @@ public class DocElementResolver extends AbstractResolver implements Initializing
         if (StrUtil.isBlank(signSealId) || !extractPoint.getValueType().equals("img")) {
             return false;
         }
-        return CheckpointConfig.ExtractPoint.SignSealId.getByValue(signSealId) != null;
+        return SEAL_ID_DETECTOR_MAP.containsKey(signSealId);
     }
 }
