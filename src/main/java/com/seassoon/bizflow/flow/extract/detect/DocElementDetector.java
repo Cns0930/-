@@ -8,17 +8,19 @@ import com.seassoon.bizflow.core.model.element.ElementResponse;
 import com.seassoon.bizflow.core.model.element.Elements;
 import com.seassoon.bizflow.core.model.element.Item;
 import com.seassoon.bizflow.core.model.extra.Field;
-import com.seassoon.bizflow.core.model.ocr.Image;
+import com.seassoon.bizflow.core.model.ocr.*;
+import com.seassoon.bizflow.core.model.ocr.Character;
 import com.seassoon.bizflow.core.util.JSONUtils;
+import com.seassoon.bizflow.flow.ocr.DocOCR;
 import com.seassoon.bizflow.support.BizFlowContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.annotation.Resource;
+import java.io.File;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +35,8 @@ public abstract class DocElementDetector implements Detector {
     private HTTPCaller httpCaller;
     @Autowired
     private BizFlowProperties properties;
+    @Resource
+    DocOCR docOcr;
 
     private static final Logger logger = LoggerFactory.getLogger(DocElementDetector.class);
 
@@ -159,7 +163,15 @@ public abstract class DocElementDetector implements Detector {
         return Arrays.asList(Arrays.asList(xMin, yMin), Arrays.asList(xMax, yMax));
     }
 
-    protected List<List<Integer>> detectLocation(List<Item> items, List<List<Integer>> detectArea, Double threshold){
+    /**
+     * 元素检测结果中 获取符合的坐标
+     *
+     * @param items
+     * @param detectArea
+     * @param threshold
+     * @return
+     */
+    protected List<List<Integer>> detectLocation(List<Item> items, List<List<Integer>> detectArea, Double threshold) {
         items = items.stream().filter(item -> {
             List<List<Integer>> position = item.getPosition();
             Double overlapArea = getIOT(position, detectArea);
@@ -174,4 +186,85 @@ public abstract class DocElementDetector implements Detector {
             return null;
         }
     }
+
+    /**
+     * 根据裁剪信息 获取裁剪后ocr
+     *
+     * @param origin 原图ocr
+     * @param path   文件路径 名称包含裁剪信息
+     * @return
+     */
+    protected OcrResult getBlockOcr(OcrResult origin, String path) {
+        // 把文件名里的坐标截出来（取坐标部分已测）
+        String shotName = path.substring(path.lastIndexOf(File.separator) + 1, path.lastIndexOf("."));
+        String[] locations = shotName.replace("_", "-").split("-");
+        Integer yStart = Integer.valueOf(locations[0]), xStart = Integer.valueOf(locations[1]),
+                yEnd = Integer.valueOf(locations[2]), xEnd = Integer.valueOf(locations[3]);
+        List<List<Integer>> position = Arrays.asList(
+                Arrays.asList(yStart, xStart), Arrays.asList(yEnd, xEnd));
+        List<Block> blockList = origin.getBlocks().stream().filter(line -> {
+            List<Position> positionList = line.getPosition();
+            List<List<Integer>> cornerPoint = Arrays.asList(
+                    Arrays.asList(positionList.get(0).getY(), positionList.get(0).getX()),
+                    Arrays.asList(positionList.get(2).getY(), positionList.get(2).getX()));
+            return getArea(cornerPoint, position);
+        }).map(line -> {
+            Block block = new Block();
+            block.setScore(1.0);
+            List<Character> characters = new ArrayList<>();
+            StringBuffer text = new StringBuffer();
+            line.getCharacters().forEach(ch -> {
+                int chStartX = ch.getPosition().get(0).getX();
+                int chEndx = ch.getPosition().get(2).getX();
+                if (Math.min(chEndx, xEnd) - Math.max(chStartX, xStart) > 0.4 * (chEndx - chStartX)) {
+                    characters.add(ch);
+                    // block的score取列表中的最小值
+                    block.setScore(Math.min(block.getScore(), ch.getScore()));
+                    text.append(ch.getText());
+                }
+            });
+            block.setCharacters(characters);
+            block.setText(text.toString());
+            if (!CollectionUtils.isEmpty(characters)) {
+                block.setPosition(Arrays.asList(
+                        characters.get(0).getPosition().get(0),
+                        characters.get(characters.size() - 1).getPosition().get(1),
+                        characters.get(characters.size() - 1).getPosition().get(2),
+                        characters.get(0).getPosition().get(3)));
+            }
+            return block;
+        }).collect(Collectors.toList());
+
+        OcrResult ocrResult = new OcrResult();
+        ocrResult.setBlocks(blockList);
+        // linemerge
+        OcrOutput ocrOutput = docOcr.mergeLine(ocrResult, -1);
+        // sort
+        ocrOutput.getOcrResult().getBlocks().sort(Comparator.comparing(block -> block.getPosition().get(3).getY()));
+        // fixme 过滤掉无效字符 需要测一下看效果是不是一样的
+        ocrOutput.getOcrResult().getBlocks().forEach( block -> {
+            block.setText(block.getText().replaceAll("[【】,。\\[\\]：;；\\-_、，() （）\\s]", ""));
+            block.setCharacters(block.getCharacters().stream().filter( ch ->
+                !ch.getText().matches("^[【】,。\\[\\]：;；\\-_、，() （）\\s]+$")
+            ).collect(Collectors.toList()));
+        });
+        return ocrOutput.getOcrResult();
+    }
+
+
+    /**
+     * 对两个区域做了某个判定 虽然不清楚原理是啥
+     *
+     * @param cornerPoint
+     * @param position
+     * @return
+     */
+    private boolean getArea(List<List<Integer>> cornerPoint, List<List<Integer>> position) {
+        // 交叉高度
+        int deltaH = Math.min(position.get(1).get(0), cornerPoint.get(1).get(0)) - Math.max(position.get(0).get(0), cornerPoint.get(0).get(0));
+        // 交叉宽度
+        int deltaW = Math.min(position.get(1).get(1), cornerPoint.get(1).get(1)) - Math.max(position.get(0).get(1), cornerPoint.get(0).get(1));
+        return deltaH > 0.5 * (cornerPoint.get(1).get(0) - cornerPoint.get(0).get(0)) && deltaW > 0;
+    }
+
 }
