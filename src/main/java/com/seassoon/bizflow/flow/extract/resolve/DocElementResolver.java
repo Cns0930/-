@@ -29,7 +29,7 @@ public class DocElementResolver extends AbstractResolver implements Initializing
 
     private static final Logger logger = LoggerFactory.getLogger(DocElementDetector.class);
 
-//    private final Map<String, Detector> SEAL_ID_DETECTOR_MAP = new HashMap<>();
+    private final Map<String, Detector> SEAL_ID_DETECTOR_MAP = new HashMap<>();
     private final static Integer expand = 30;
 
     @Autowired
@@ -45,7 +45,7 @@ public class DocElementResolver extends AbstractResolver implements Initializing
     @Override
     public void afterPropertiesSet() throws Exception {
         // 初始化文档元素提取实例
-        SEAL_ID_DETECTOR_MAP.put("1", appContext.getBean(HardWritingDetector.class));
+        SEAL_ID_DETECTOR_MAP.put("1", appContext.getBean(HandwritingDetector.class));
     }
 
     @Override
