@@ -1,5 +1,6 @@
 package com.seassoon.bizflow.flow;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.file.FileNameUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
@@ -140,6 +141,49 @@ public class BizFlow extends AbstractFlow {
         stopWatch.stop();
         logger.info("文档数据提取完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
         return null;
+    }
+
+    private void mergeExtraKV1(List<DocumentKV> docKVs, List<ExtraKVInfo> extraKVs, List<Image> images, List<CheckpointConfig> checkpoints) {
+        // 只合并source为超级帮办的
+        if (CollectionUtil.isEmpty(extraKVs) || extraKVs.get(0) == null
+                || !"cjbb".equals(extraKVs.get(0).getSource()) || extraKVs.get(0).getDocumentList() != null) {
+            return;
+        }
+
+        // 结构化数据Key-Value映射，第一个Key为材料编号，第二个Key为字段名称
+        Map<String, Map<String, String>> extraKVMap = extraKVs.get(0).getDocumentList().stream()
+                .collect(Collectors.toMap(Document::getDocumentLabel,
+                        document -> document.getFieldVal().stream().collect(Collectors.toMap(FieldKV::getKey, fieldKV -> fieldKV.getVal().get(0), (a, b) -> a)),
+                        (a, b) -> a));
+
+        // 分类图片映射，Key为材料编号，Value为图片列表
+        Map<String, List<Image>> imageMap = images.stream().collect(Collectors.groupingBy(Image::getDocumentLabel));
+
+        // 提取点页码映射，第一个Key为材料编号，第二个Key为字段名称，目的是为了得到指定材料编号下指定字段名称的页码
+        Map<String, Map<String, Integer>> checkpointPageMap = checkpoints.stream()
+                .collect(Collectors.toMap(CheckpointConfig::getFormTypeId,
+                        checkpointConfig -> checkpointConfig.getExtractPoint().stream()
+                                .collect(Collectors.toMap(CheckpointConfig.ExtractPoint::getDocumentField, CheckpointConfig.ExtractPoint::getPage, (a, b) -> a)),
+                        (a, b) -> a));
+
+        // 替换每条结构化数据
+        docKVs.forEach(documentKV -> documentKV.getDocumentList().forEach(document -> {
+            document.setSource(extraKVs.get(0).getSource());
+            document.setPage(checkpointPageMap.get(documentKV.getDocumentLabel()).get(document.getDocumentField()));
+
+            // 根据页码匹配图片ID
+            String imageId = imageMap.get(documentKV.getDocumentLabel()).stream()
+                    .filter(image -> image.getDocumentSource() == 1 && image.getDocumentPage().equals(document.getPage()))
+                    .map(Image::getImageId).findAny().orElse(null);
+            document.setImageId(imageId);
+
+            // 将提取内容替换为超级帮办的值，如果有多个坐标，合并成一个大坐标（第一个的起始位置和最后一个的结束位置）
+            String fieldContent = extraKVMap.get(documentKV.getDocumentLabel()).get(document.getDocumentField());
+            List<Integer> start = CollectionUtil.getFirst(document.getValueInfo()).getFieldLocation().get(0);
+            List<Integer> end = CollectionUtil.getLast(document.getValueInfo()).getFieldLocation().get(1);
+            Field field = Field.of(fieldContent, Arrays.asList(start, end), 1.0);
+            document.setValueInfo(Collections.singletonList(field));
+        }));
     }
 
     /**

@@ -68,11 +68,11 @@ public class SinglePageStrategy extends AbstractStrategy {
             params.put("ocr", ocr);
 
             // 提取内容
-            return doResolve(params, resolvers, image, ocr);
+            return doResolve(params, resolvers, image);
         }).findAny().orElseThrow(() -> new NullPointerException(String.format("材料%s字段%s信息提取失败", params.get("formTypeId"), extractPoint.getDocumentField())));
     }
 
-    private Content doResolve(Map<String, Object> params, List<Resolver> resolvers, Image image, OcrOutput ocr) {
+    private Content doResolve(Map<String, Object> params, List<Resolver> resolvers, Image image) {
         // 调用Resolver对象提取字段内容
         return resolvers.stream()
                 .map(resolver -> resolver.resolve(params))

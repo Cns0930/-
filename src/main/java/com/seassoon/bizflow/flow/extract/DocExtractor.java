@@ -75,8 +75,9 @@ public class DocExtractor implements Extractor, InitializingBean {
                     })*/.collect(Collectors.toList());
 
             // 对应图片的OCR结果
-            List<OcrOutput> imageOCRs = ocrOutputs.stream().filter(ocr ->
-                    typedImages.stream().anyMatch(image -> image.getImageId().equals(ocr.getImageName()))).collect(Collectors.toList());
+            List<OcrOutput> imageOCRs = ocrOutputs.stream()
+                    .filter(ocr -> typedImages.stream().anyMatch(image -> image.getImageId().equals(ocr.getImageName())))
+                    .collect(Collectors.toList());
 
             // 提取策略
             UnifiedStrategy strategy = strategyMap.get(mapping.get(formTypeId));
