@@ -107,9 +107,11 @@ public class DefaultDocClassify implements DocClassify {
 
         // 图片分类
         images.forEach(image -> {
-//            // 如果材料来源是超级帮办并且有分类，跳过分类
+            classifiedAI.getAndAdd(1);
+            // 如果材料来源是超级帮办并且有分类，跳过分类
             if (image.getDocumentSource() == 1 && !image.getDocumentLabel().equals("0")
                     && image.getDocumentPage() != null && image.getTotalPages() != null) {
+                logger.info("{}图片来源超级帮办且已有分类结果 无须系统分类, 剩余未分类图片数量{}", image.getImageId(), images.size() - classifiedAI.get());
                 // 分类配置
                 List<List<SortConfig.TypeIdField>> typeIdFields = origTypeIdField.get(image.getDocumentLabel());
                 if (CollectionUtil.isNotEmpty(typeIdFields)) {
@@ -134,13 +136,14 @@ public class DefaultDocClassify implements DocClassify {
             } else {
                 // TODO apiInfo中已有分类结果，跳过分类
 
+                logger.info("{}图片分类中, 剩余未分类图片数量{}", image.getImageId(), images.size() - classifiedAI.get());
                 // 获取图片OCR结果，进行分类
                 List<String> texts = docTexts.get(image.getImageId());
                 // 根据ocr结果-规则进行分类；
-                matchClassif(image, typeIdField.get("R"), texts, docTitles, copyImages);
+                matchClassif(image, typeIdField.get("R"), texts, docTitles, copyImages, true);
                 // 根据调用结构化数据中的字段进行额外补充细分;
                 if ("0".equals(image.getDocumentLabel()) && !CollectionUtils.isEmpty(typeIdField.get("X"))) {
-                    matchClassif(image, typeIdField.get("X"), texts, docTitles, copyImages);
+                    matchClassif(image, typeIdField.get("X"), texts, docTitles, copyImages, true);
                 }
                 // step2. 获取身份证复印件，驾驶证分类 特殊分类
                 if ("0".equals(image.getDocumentLabel())) {
@@ -153,8 +156,20 @@ public class DefaultDocClassify implements DocClassify {
                         }
                     });
                 }
+                // step3再次对没有分出类别的图片 降低要求再次分类(纠错分类)
+                if ("0".equals(image.getDocumentLabel())) {
+                    matchClassif(image, typeIdField.get("R"), texts, docTitles, copyImages, false);
+                    if ("0".equals(image.getDocumentLabel()) && !CollectionUtils.isEmpty(typeIdField.get("X"))) {
+                        matchClassif(image, typeIdField.get("X"), texts, docTitles, copyImages, false);
+                    }
+                }
             }
+            // TODO # step3.根据材料列表中，未分类材料的前后两张材料的分类，是否需要基于扫描顺序进行补充分类 对未分类材料进行follow_sort (看配置文件中都没有那个属性了 python代码直接设了个false没进过这个分类 就没弄了)
+
+
         });
+
+        logger.info("共有 {} 张图片，其中未分类 {} 张", images.size(), images.stream().filter(f -> f.getDocumentLabel().equals("0")).count());
         return images;
     }
 
@@ -429,12 +444,13 @@ public class DefaultDocClassify implements DocClassify {
      *
      * @param image       图片分类信息
      * @param typeIdField 配置信息(存在普通分类和补充分类)
+     * @param isStrict    是否严格分类
      */
-    private void matchClassif(Image image, Map<String, List<List<SortConfig.TypeIdField>>> typeIdField, List<String> texts, Map<String, Object> docTitles, List<Image> copyImages) {
+    private void matchClassif(Image image, Map<String, List<List<SortConfig.TypeIdField>>> typeIdField, List<String> texts, Map<String, Object> docTitles, List<Image> copyImages, Boolean isStrict) {
         for (String typeId : typeIdField.keySet()) {
             List<List<SortConfig.TypeIdField>> typeIdFieldInfoList = typeIdField.get(typeId);
             //匹配
-            match(image, typeIdFieldInfoList, texts, typeId, docTitles, copyImages);
+            match(image, typeIdFieldInfoList, texts, typeId, docTitles, copyImages, isStrict);
         }
     }
 
@@ -445,16 +461,19 @@ public class DefaultDocClassify implements DocClassify {
      * @param typeId              材料
      * @param docTitles           图片标题
      * @param copyImages          copy的图片信息
+     * @param isStrict            是否严格分类
      */
-    public void match(Image image, List<List<SortConfig.TypeIdField>> typeIdFieldInfoList, List<String> texts, String typeId, Map<String, Object> docTitles, List<Image> copyImages) {
+    public void match(Image image, List<List<SortConfig.TypeIdField>> typeIdFieldInfoList, List<String> texts, String typeId, Map<String, Object> docTitles, List<Image> copyImages, Boolean isStrict) {
         for (List<SortConfig.TypeIdField> field : typeIdFieldInfoList) {
             AtomicReference<Boolean> isMatch = new AtomicReference<>(false);
             AtomicReference<Integer> documentPage = new AtomicReference<>(0);
             AtomicReference<Integer> totalPages = new AtomicReference<>(0);
             for (SortConfig.TypeIdField f : field) {
+                // TODO 如果是纠错分类 且method=="regular" 需要对ocr结果进行纠错再分类
+
                 Matcher matcher = MATCHERS.get(f.getMethod());
-                //一组数据必须全部满足
-                if (!matcher.match(f, texts)) {
+                //严格分类&& 一组数据必须全部满足
+                if (isStrict && !matcher.match(f, texts)) {
                     return;
                 }
                 isMatch.set(matcher.match(f, texts));

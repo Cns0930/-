@@ -105,8 +105,9 @@ public class BizFlow extends AbstractFlow {
                 if (srcFile != null) {
                     // 复制到target目录
                     Path path = Paths.get(target.toString(), srcFile.getFileName().toString());
-                    Files.copy(srcFile, path);
-
+                    if (Files.notExists(path)) {
+                        Files.copy(srcFile, path);
+                    }
                     // 更新image对象属性
                     image.setClassifiedPath(path.toString());
                 }
