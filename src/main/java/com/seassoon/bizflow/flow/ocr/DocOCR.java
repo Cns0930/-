@@ -162,8 +162,8 @@ public class DocOCR implements OCR {
         int threshold = properties.getAlgorithm().getDotCoincide();
         List<Block> blocks = ocrResult.getBlocks();
         for (int i = 0; i < blocks.size(); i++) {
-            Block a = blocks.get(i);
             for (int j = 0; j < blocks.size(); j++) {
+                Block a = blocks.get(i);
                 Block b = blocks.get(j);
                 if (j > i) {
                     boolean needMerge = needMerge(a.getPosition(), b.getPosition());
