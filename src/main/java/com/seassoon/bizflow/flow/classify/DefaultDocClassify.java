@@ -1,7 +1,6 @@
 package com.seassoon.bizflow.flow.classify;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.model.extra.ExtraKVInfo;
 import com.seassoon.bizflow.core.model.extra.FieldKV;
@@ -15,20 +14,25 @@ import com.seassoon.bizflow.core.model.ocr.Position;
 import com.seassoon.bizflow.core.util.Collections3;
 import com.seassoon.bizflow.core.util.TextUtils;
 import com.seassoon.bizflow.flow.classify.matcher.*;
+import com.seassoon.bizflow.flow.classify.special.DrivingLicenceDetect;
+import com.seassoon.bizflow.flow.classify.special.IdCardDetect;
+import com.seassoon.bizflow.flow.classify.special.SpecialDetect;
+import com.seassoon.bizflow.flow.classify.special.SpecialServer;
+import com.seassoon.bizflow.flow.extract.detect.Detector;
+import com.seassoon.bizflow.flow.extract.detect.HandwritingDetector;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
-import javax.print.DocFlavor;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,9 +61,11 @@ public class DefaultDocClassify implements DocClassify {
      * 文档分类匹配器
      */
     private final Map<String, Matcher> MATCHERS = new HashMap<>();
-
+    private final Map<String, SpecialDetect> SPECIAL_DETECT_MAP = new HashMap<>();
     @Autowired
     private BizFlowProperties properties;
+    @Autowired
+    private ApplicationContext appContext;
 
     @PostConstruct
     private void postConstruct() {
@@ -68,6 +74,9 @@ public class DefaultDocClassify implements DocClassify {
         MATCHERS.put("Regular", new FullTextRegularMatcher());
         MATCHERS.put("similar", new SimilarMatcher(properties.getAlgorithm().getMatchThreshold()));
         MATCHERS.put("extra", new ExtraMatcher());
+        //特殊材料分类实例
+        SPECIAL_DETECT_MAP.put("ID_CARD", appContext.getBean(IdCardDetect.class));
+        SPECIAL_DETECT_MAP.put("DRIVING_LICENCE", appContext.getBean(DrivingLicenceDetect.class));
     }
 
     @Override
@@ -134,7 +143,16 @@ public class DefaultDocClassify implements DocClassify {
                     matchClassif(image, typeIdField.get("X"), texts, docTitles, copyImages);
                 }
                 // step2. 获取身份证复印件，驾驶证分类 特殊分类
-
+                if ("0".equals(image.getDocumentLabel())) {
+                    origTypeIdField.keySet().stream().filter(field -> field.equals("SC-E02") || field.equals("JD-XS01")).
+                            findAny().ifPresent(key -> {
+                        boolean isIdCard = key.equals("SC-E02") && SPECIAL_DETECT_MAP.get("ID_CARD").preProcessing(image);
+                        boolean isDrivingLicence = key.equals("JD-XS01") && SPECIAL_DETECT_MAP.get("DRIVING_LICENCE").preProcessing(image);
+                        if ((isIdCard && !isDrivingLicence) || (!isIdCard && isDrivingLicence)) {
+                            image.saveResult(image, key, 1, 1);
+                        }
+                    });
+                }
             }
         });
         return images;
@@ -176,6 +194,7 @@ public class DefaultDocClassify implements DocClassify {
                 RtypeIdField.put(key, typeId);
             }
         });
+        //分成两组
         grouped.put("X", XtypeIdField);
         grouped.put("R", RtypeIdField);
 
