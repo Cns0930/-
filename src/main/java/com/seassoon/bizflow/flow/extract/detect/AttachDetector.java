@@ -7,12 +7,14 @@ import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.element.Elements;
 import com.seassoon.bizflow.core.model.extra.Field;
 import com.seassoon.bizflow.core.model.ocr.Block;
+import com.seassoon.bizflow.core.model.ocr.OcrOutput;
 import com.seassoon.bizflow.core.model.ocr.OcrResult;
 import com.seassoon.bizflow.core.util.JSONUtils;
 import com.seassoon.bizflow.flow.ocr.DocOCR;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.nio.file.Paths;
@@ -27,15 +29,11 @@ import java.util.Objects;
  * @author chimney
  * @date 2021/11/30
  */
+@Component
 public class AttachDetector extends DocElementDetector{
 
     @Resource
     DocOCR docOCR;
-
-    @Resource
-    OcrProcessor ocrProcessor;
-
-    private static final Logger logger = LoggerFactory.getLogger(AttachDetector.class);
 
     final private String[] idField = new String[]{"中华人民共和国","中华人民共和", "人民共和国", "共和国", "居民身份证", "居民身份",
             "公民身份号码", "签发机关", "签发", "有效期限", "日本国", "PASSPORT", "JAPAN","男","女","村"};
@@ -63,26 +61,18 @@ public class AttachDetector extends DocElementDetector{
      * @return
      */
     private Field detectAttachID(Map<String, Object> params) {
-        // 根据裁剪后路径 拿ocr结果
-        String path = (String) params.get("path");
-        String strOcrResponse = ocrProcessor.process(Paths.get(path));
-        // OCR结果转JSON
-        JsonNode ocrResultNode = JSONUtils.readTree(strOcrResponse);
-        if (ocrResultNode != null) {
-            // OCR返回结果
-            OcrResult ocrResult = new OcrResult();
-            ocrResult.setBlocks(JSONUtils.readValue(ocrResultNode.get("blocks").toString(), new TypeReference<List<Block>>() {
-            }));
+        // 原为重新调ocr 根据算法反馈 改为用ocr剪裁的方式
+        OcrResult ocrResult = getBlockOcr(((OcrOutput) params.get("ocr")).getOcrResultWithoutLineMerge(), (String) params.get("path"));
 
-            // 排序
-            ocrResult = docOCR.sortBlock(ocrResult);
-            // ocr结果关键词判断
-            StringBuffer allContext = new StringBuffer();
-            ocrResult.getBlocks().forEach(block -> {
-                allContext.append(block.getText());
-            });
-            if (StringUtils.containsAny(allContext.toString(), idField)) {
-                return Field.of("已粘贴身份证件", null, 1.0);
+        // 排序
+        ocrResult = docOCR.sortBlock(ocrResult);
+        // ocr结果关键词判断
+        StringBuffer allContext = new StringBuffer();
+        ocrResult.getBlocks().forEach(block -> {
+            allContext.append(block.getText());
+        });
+        if (StringUtils.containsAny(allContext.toString(), idField)) {
+            return Field.of("已粘贴身份证件", null, 1.0);
             }
 
             // 再用元素判断
@@ -96,7 +86,7 @@ public class AttachDetector extends DocElementDetector{
                     return Field.of("已粘贴身份证件", null, 1.0);
                 }
             }
-        }
+//        }
 
         return Field.of("未粘贴身份证件", null, 1.0);
     }

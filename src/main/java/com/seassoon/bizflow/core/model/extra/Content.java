@@ -1,11 +1,11 @@
 package com.seassoon.bizflow.core.model.extra;
 
 import com.google.common.collect.ImmutableMap;
+import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,4 +31,16 @@ public class Content {
             .put("string", "0")
             .put("img", "1")
             .build();
+
+    public static Content of(String imageId, CheckpointConfig.ExtractPoint extractPoint) {
+        Content content = new Content();
+        content.setImageId(imageId);
+        content.setDocumentField(extractPoint.getDocumentField());
+        content.setPage(extractPoint.getPage());
+        content.setImageOrString(Content.VALUE_TYPES.get(extractPoint.getValueType()));
+        content.setSource("smj"); // 默认为扫描件
+        content.setSortProperty(extractPoint.getSortProperty());
+        content.setDisplayProperty(extractPoint.getDisplayProperty());
+        return content;
+    }
 }

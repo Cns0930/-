@@ -45,30 +45,46 @@ public class SinglePageStrategy extends AbstractStrategy {
         params.put("formTypeId", checkpoint.getFormTypeId());
 
         // 对每个提取点分别提取
-        return checkpoint.getExtractPoint().stream().map(extractPoint -> {
-            params.put("extractPoint", extractPoint);
+        return checkpoint.getExtractPoint().stream()
+                .map(extractPoint -> mapToContent(params, extractPoint, images, ocrOutputs))
+                .collect(Collectors.toList());
+    }
 
-            // 匹配支持的提取器
-            List<Resolver> resolvers = matchResolvers(extractPoint);
+    private Content mapToContent(Map<String, Object> params, CheckpointConfig.ExtractPoint extractPoint, List<Image> images,
+                                 List<OcrOutput> ocrOutputs) {
+        params.put("extractPoint", extractPoint);
 
-            // 如果有多张图片，每张图片分别提取
-            return images.stream().map(image -> {
-                OcrOutput ocr = ocrOutputs.stream().filter(ocrOutput -> ocrOutput.getImageName().equals(image.getImageId()))
-                        .findAny().orElseThrow(() -> new NullPointerException("OCR结果丢失"));
+        // 匹配支持的提取器
+        List<Resolver> resolvers = forResolvers(extractPoint);
 
-                params.put("image", image);
-                params.put("ocr", ocr);
+        return images.stream().map(image -> {
+            // 获取图片OCR结果
+            OcrOutput ocr = ocrOutputs.stream()
+                    .filter(ocrOutput -> ocrOutput.getImageName().equals(image.getImageId()))
+                    .findAny().orElseThrow(() -> new NullPointerException("OCR结果丢失"));
 
-                // 提取结果
-                return resolvers.stream().map(resolver -> resolver.resolve(params))
-                        .filter(c -> CollectionUtil.isNotEmpty(c.getValueInfo()))
-                        .findAny().orElse(null);
-            }).filter(Objects::nonNull).collect(Collectors.toMap(Content::getDocumentField, content -> content, (a, b) -> {
-                // 对于单页跨页的图片分别提取后，存在多个Content，需要做一次合并，合并的只是valueInfo属性，其他不变
-                a.setValueInfo(Collections3.merge(a.getValueInfo(), b.getValueInfo()));
-                return a;
-            })).values().stream().findAny().orElseThrow(
-                    () -> new NullPointerException(String.format("材料%s字段%s信息提取失败", checkpoint.getFormTypeId(), extractPoint.getDocumentField())));
-        }).collect(Collectors.toList());
+            // 放入参数表
+            params.put("image", image);
+            params.put("ocr", ocr);
+
+            // 提取内容
+            return doResolve(params, resolvers, image, ocr);
+        }).findAny().orElseThrow(() -> new NullPointerException(String.format("材料%s字段%s信息提取失败", params.get("formTypeId"), extractPoint.getDocumentField())));
+    }
+
+    private Content doResolve(Map<String, Object> params, List<Resolver> resolvers, Image image, OcrOutput ocr) {
+        // 调用Resolver对象提取字段内容
+        return resolvers.stream()
+                .map(resolver -> resolver.resolve(params))
+                .filter(content -> CollectionUtil.isNotEmpty(content.getValueInfo()))
+                .collect(Collectors.toMap(Content::getDocumentField, content -> content, (a, b) -> {
+                    // 对于单页跨页的图片分别提取后，存在多个Content，需要做一次合并，合并的只是valueInfo属性，其他不变
+                    a.setValueInfo(Collections3.merge(a.getValueInfo(), b.getValueInfo()));
+                    return a;
+                })).values().stream().findAny().orElseGet(() -> {
+                    // 如果没有提取到返回一个valueInfo为空的Content
+                    CheckpointConfig.ExtractPoint extractPoint = (CheckpointConfig.ExtractPoint) params.get("extractPoint");
+                    return Content.of(image.getImageId(), extractPoint);
+                });
     }
 }

@@ -4,17 +4,23 @@ import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.element.Elements;
 import com.seassoon.bizflow.core.model.element.Item;
 import com.seassoon.bizflow.core.model.extra.Field;
+import com.seassoon.bizflow.core.model.ocr.Block;
 import com.seassoon.bizflow.core.model.ocr.OcrOutput;
 import com.seassoon.bizflow.core.model.ocr.OcrResult;
+import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 日期检测/是否盖章/是否盖红章
  * @author chimney
  * @date 2021/12/1
  */
+@Component
 public class StampDetector extends DocElementDetector{
 
     @Override
@@ -44,10 +50,22 @@ public class StampDetector extends DocElementDetector{
         // ocr检测日期
         OcrOutput ocrOutput = (OcrOutput) params.get("ocr");
         OcrResult ocrResult = ocrOutput.getOcrResultWithoutLineMerge();
-        // todo whether_have_date_ocr
+        // whether_have_date_ocr
+        String path = (String) params.get("path");
+        ocrResult = getBlockOcr(ocrResult, path);
+        Pattern pattern = Pattern.compile("[0-9]{4}年[0-9]{1,2}月[0-9]{1,2}日");
+        List<Block> blockList = ocrResult.getBlocks();
+        for(Block block : blockList){
+            String text = block.getText();
+            if(pattern.matcher(text).find()){
+                return Field.of("已填写文件日期", Arrays.asList(
+                        Arrays.asList(block.getPosition().get(0).getY(), block.getPosition().get(0).getX()),
+                        Arrays.asList(block.getPosition().get(2).getY(), block.getPosition().get(2).getX())
+                ), 1.0);
+            }
+        }
 
-
-        // ocr无的用元素检测结果
+        // ocr没有得到的 用元素检测结果
         Elements elements = (Elements) params.get("elements");
         if (elements != null) {
             // 检测区域的坐标
@@ -89,7 +107,20 @@ public class StampDetector extends DocElementDetector{
      * @return
      */
     private Field detectRedStamp(Map<String, Object> params){
-        return null;
+        // 其实先把结果筛一下label就好了
+        Elements elements = (Elements) params.get("elements");
+        if (elements != null) {
+            List<List<Integer>> detectArea = (List<List<Integer>>) params.get("detectArea");
+            Double threshold = (Double) params.get("threshold");
+            List<Item> stamp = elements.getStamp();
+            List<Item> redStamp = stamp.stream().filter( item -> item.getLabel()
+                    .equals(Item.Label.stamp_red.name())).collect(Collectors.toList());
+            List<List<Integer>> location = detectLocation(redStamp, detectArea, threshold);
+            if(location != null){
+                return Field.of("已盖红章", location, 1.0);
+            }
+        }
+        return Field.of("未盖红章", null, 1.0);
     }
 
     private List<List<Integer>> detectStampMatch(Map<String, Object> params) {
