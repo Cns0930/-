@@ -79,6 +79,8 @@ public class DocElementResolver extends AbstractResolver implements Initializing
         List<List<Integer>> location = ImgUtils.calcLocation(strPath, extractPoint.getInitPosition());
         Path snapshot = snapshot(image, location);
         params.put("path", snapshot.toString());
+        // TODO 应该缺一个已经提取到的 location
+
         // 检测区域
         List<List<Integer>> detectArea = Arrays.asList(
                 Arrays.asList(location.get(0).get(1), location.get(0).get(0)),
