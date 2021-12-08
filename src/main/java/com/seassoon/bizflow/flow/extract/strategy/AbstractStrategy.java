@@ -52,7 +52,7 @@ public abstract class AbstractStrategy implements UnifiedStrategy, InitializingB
      * @param extractPoint {@link com.seassoon.bizflow.core.model.config.CheckpointConfig.ExtractPoint}
      * @return {@link Resolver}集合
      */
-    protected List<Resolver> forResolvers(CheckpointConfig.ExtractPoint extractPoint) {
-        return resolvers.stream().filter(resolver -> resolver.support(extractPoint)).collect(Collectors.toList());
+    protected Resolver getResolver(CheckpointConfig.ExtractPoint extractPoint) {
+        return resolvers.stream().filter(resolver -> resolver.support(extractPoint)).findAny().orElse(null);
     }
 }

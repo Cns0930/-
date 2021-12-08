@@ -35,7 +35,7 @@ biz-flow:
   local-storage: "${user.dir}/tmp" # 本地缓存目录
   ocr-type: paddle
   integration:
-    OCR: "http://10.0.96.19:31111/api/algorithm/extract_text_info"
+    OCR: "http://10.0.96.19:30916/api/algorithm/extract_text_info"
     HAND_WRITING_TEXT: "http://10.0.96.19:32593/api/algorithm/extract_handwriting_text_info"
     DATE_TEXT: "http://10.0.96.19:30689/api/algorithm/extract_date_text_info"
     SEAL: "http://10.0.103.69:8087/api/algorithm/extract_organization_seal_info"

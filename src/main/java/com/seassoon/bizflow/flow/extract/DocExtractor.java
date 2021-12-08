@@ -1,12 +1,15 @@
 package com.seassoon.bizflow.flow.extract;
 
+import com.google.common.collect.Lists;
 import com.seassoon.bizflow.config.BizFlowProperties;
+import com.seassoon.bizflow.core.model.Input;
 import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.extra.Content;
 import com.seassoon.bizflow.core.model.extra.DocumentKV;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.model.ocr.OcrOutput;
 import com.seassoon.bizflow.core.util.ConcurrentStopWatch;
+import com.seassoon.bizflow.flow.extract.strategy.MultiPageStrategy;
 import com.seassoon.bizflow.flow.extract.strategy.SinglePageStrategy;
 import com.seassoon.bizflow.flow.extract.strategy.UnifiedStrategy;
 import com.seassoon.bizflow.flow.extract.tools.TableCutter;
@@ -50,29 +53,26 @@ public class DocExtractor implements Extractor, InitializingBean {
     @Override
     public void afterPropertiesSet() {
         strategyMap.put("info_extract.strategies.UnifiedStrategy_single_page", appContext.getBean(SinglePageStrategy.class));
+        strategyMap.put("info_extract.strategies.UnifiedStrategy_multi_page", appContext.getBean(MultiPageStrategy.class));
     }
 
     @Override
     public List<DocumentKV> extract(List<Image> images, List<OcrOutput> ocrOutputs, List<CheckpointConfig> checkpoints, Map<String, String> mapping) {
         // 从上下文获取RecordID
-        String recordId = BizFlowContextHolder.getInput().getRecordId();
+        Input input = BizFlowContextHolder.getInput();
 
         // 按checkpoint提取，每个类别对应的图片可能有多张（多页）
-        return checkpoints.stream().parallel().map(checkpoint -> {
+        return checkpoints.stream()/*.parallel()*/.map(checkpoint -> {
             // 初始化线程上下文的recordID
-            BizFlowContextHolder.putMDC(recordId);
+            BizFlowContextHolder.putMDC(input.getRecordId());
+            BizFlowContextHolder.setInput(input);
 
             String formTypeId = checkpoint.getFormTypeId();
 
             // 获取对应分类下的图片
             List<Image> typedImages = images.stream()
                     .filter(image -> image.getDocumentLabel().equals(formTypeId))
-                    /*.peek(image -> {
-                        // 检测图片是否含有表格，并切片保存
-                        String target = Paths.get(properties.getLocalStorage(), "/files/cell", image.getDocumentLabel(), image.getImageId()).toString();
-                        List<String> cells = tableCutter.cutAndSave(image.getClassifiedPath(), target);
-                        image.setTableCells(cells);
-                    })*/.collect(Collectors.toList());
+                    .collect(Collectors.toList());
 
             // 对应图片的OCR结果
             List<OcrOutput> imageOCRs = ocrOutputs.stream()
@@ -81,6 +81,10 @@ public class DocExtractor implements Extractor, InitializingBean {
 
             // 提取策略
             UnifiedStrategy strategy = strategyMap.get(mapping.get(formTypeId));
+            if (strategy == null) {
+                logger.error("不支持的提取策略：{} - {}", formTypeId, mapping.get(formTypeId));
+                return DocumentKV.of(formTypeId, Lists.newArrayList());
+            }
 
             return extractKV(typedImages, imageOCRs, checkpoint, strategy);
         }).collect(Collectors.toList());
@@ -97,7 +101,6 @@ public class DocExtractor implements Extractor, InitializingBean {
      */
     private DocumentKV extractKV(List<Image> images, List<OcrOutput> ocrOutputs, CheckpointConfig checkpoint, UnifiedStrategy strategy) {
         String formTypeId = checkpoint.getFormTypeId();
-        logger.info("[{}]开始提取分类数据", formTypeId);
 
         // 计时器
         ConcurrentStopWatch stopWatch = new ConcurrentStopWatch(formTypeId);

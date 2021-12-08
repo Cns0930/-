@@ -66,13 +66,14 @@ public class IdCardResolver extends AbstractResolver {
         Image image = (Image) params.get("image");
         CheckpointConfig.ExtractPoint extractPoint = (CheckpointConfig.ExtractPoint) params.get("extractPoint");
         String signSealId = extractPoint.getSignSealId();
-        String strPath = image.getCorrected().getLocalPath();
+        String strPath = image.getClassifiedPath();
 
         // 返回的结果
         Content content = Content.of(image.getImageId(), extractPoint);
 
         // 计算截图区域并切图
-        List<List<Integer>> location = ImgUtils.calcLocation(strPath, extractPoint.getInitPosition());
+        ImgUtils.Shape shape = ImgUtils.getShape(strPath);
+        List<List<Integer>> location = ImgUtils.calcLocation(shape, extractPoint.getInitPosition());
         Path snapshot = snapshot(image, location);
 
         // 获取身份证提取结果
@@ -84,7 +85,7 @@ public class IdCardResolver extends AbstractResolver {
         }
 
         // 匹配身份证提取的内容
-        Field field = idCards.stream().map(idCard -> idCard.getInfo().stream()
+        Field field = idCards.stream().flatMap(idCard -> idCard.getInfo().stream())
                 .filter(info -> signSealId.equals(FIELD_SEAL_ID_MAP.get(info.getField())))
                 .map(info -> {
                     List<List<Integer>> position = info.getPosition();
@@ -92,7 +93,7 @@ public class IdCardResolver extends AbstractResolver {
                             Arrays.asList(position.get(0).get(1), position.get(0).get(0)),
                             Arrays.asList(position.get(1).get(1), position.get(1).get(0)));
                     return Field.of(info.getText(), fieldLocation, info.getTextScore());
-                }).findAny().orElse(null)).findAny().orElse(null);
+                }).findAny().orElse(null);
 
         // 对location修正
         if (field != null) {

@@ -134,7 +134,7 @@ public class BizFlow extends AbstractFlow {
         List<DocumentKV> docKVs = extractor.extract(images, ocrOutputs, checkpoints, mapping);
 
         // 如果帮办有结构化数据，合并到结果中
-        mergeExtraKV(docKVs, extraKVs, images, checkpoints);
+        mergeExtraKV1(docKVs, extraKVs, images, checkpoints);
 
         // 保存提取结果
         localStorage.save(docKVs, "doc_kv.json");
@@ -178,11 +178,15 @@ public class BizFlow extends AbstractFlow {
                     .map(Image::getImageId).findAny().orElse(null);
             document.setImageId(imageId);
 
-            // 将提取内容替换为超级帮办的值，如果有多个坐标，合并成一个大坐标（第一个的起始位置和最后一个的结束位置）
+            // 将提取内容替换为超级帮办的值
             String fieldContent = extraKVMap.get(documentKV.getDocumentLabel()).get(document.getDocumentField());
-            List<Integer> start = CollectionUtil.getFirst(document.getValueInfo()).getFieldLocation().get(0);
-            List<Integer> end = CollectionUtil.getLast(document.getValueInfo()).getFieldLocation().get(1);
-            Field field = Field.of(fieldContent, Arrays.asList(start, end), 1.0);
+            Field field = Field.of(fieldContent, null, 1.0);
+            if (CollectionUtil.isNotEmpty(document.getValueInfo())) {
+                // 如果有多个坐标，合并成一个大坐标（第一个的起始位置和最后一个的结束位置）
+                List<Integer> start = CollectionUtil.getFirst(document.getValueInfo()).getFieldLocation().get(0);
+                List<Integer> end = CollectionUtil.getLast(document.getValueInfo()).getFieldLocation().get(1);
+                field.setFieldLocation(Arrays.asList(start, end));
+            }
             document.setValueInfo(Collections.singletonList(field));
         }));
     }

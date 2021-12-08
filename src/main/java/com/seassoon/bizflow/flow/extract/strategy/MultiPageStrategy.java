@@ -10,34 +10,26 @@ import com.seassoon.bizflow.core.util.Collections3;
 import com.seassoon.bizflow.flow.extract.resolve.Resolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.function.BinaryOperator;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 单页提取策略
- *
+ * 多页提取策略
  * @author lw900925 (liuwei@seassoon.com)
  */
 @Component
-public class SinglePageStrategy extends AbstractStrategy {
+public class MultiPageStrategy extends AbstractStrategy {
 
-    /** logger */
-    private static final Logger logger = LoggerFactory.getLogger(SinglePageStrategy.class);
+    private static final Logger logger = LoggerFactory.getLogger(MultiPageStrategy.class);
 
     @Override
     public List<Content> parse(List<Image> images, List<OcrOutput> ocrOutputs, CheckpointConfig checkpoint) {
         String formTypeId = checkpoint.getFormTypeId();
-
-        // 检查是否为多页
-        if (checkpoint.getMultiPage()) {
-            logger.error("材料{}仅支持单页提取，请检查事项配置", formTypeId);
-            return new ArrayList<>();
-        }
 
         // 初始化参数列表
         Map<String, Object> params = new HashMap<>();
@@ -56,6 +48,13 @@ public class SinglePageStrategy extends AbstractStrategy {
 
         // 匹配支持的提取器
         Resolver resolver = getResolver(extractPoint);
+
+        if (CollectionUtil.isEmpty(images) || resolver == null) {
+            return Content.of(StrUtil.EMPTY, extractPoint);
+        }
+
+        // 匹配页码
+        images = images.stream().filter(image -> image.getDocumentPage().equals(extractPoint.getPage())).collect(Collectors.toList());
 
         List<Content> contents = new ArrayList<>();
         // 多张材料循环提取

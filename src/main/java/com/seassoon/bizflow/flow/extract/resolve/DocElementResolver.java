@@ -1,5 +1,6 @@
 package com.seassoon.bizflow.flow.extract.resolve;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.model.config.CheckpointConfig;
@@ -55,20 +56,13 @@ public class DocElementResolver extends AbstractResolver implements Initializing
         Image image = (Image) params.get("image");
         String formTypeId = (String) params.get("formTypeId");
         CheckpointConfig.ExtractPoint extractPoint = (CheckpointConfig.ExtractPoint) params.get("extractPoint");
-        String strPath = image.getCorrected().getLocalPath();
+        String strPath = image.getClassifiedPath();
 
         // 初始化返回值
         Content content = Content.of(image.getImageId(), extractPoint);
 
         // 获取对应的文档元素提取器
         String signSealId = extractPoint.getSignSealId();
-        CheckpointConfig.ExtractPoint.SignSealId signSealIdEnum =
-                CheckpointConfig.ExtractPoint.SignSealId.getByValue((String) params.get("signSealId"));
-        if (signSealIdEnum == null) {
-            logger.error("未找到对应的文档元素提取器，请检查checkpoint配置：formTypeId={}, field={}, signSealId={}",
-                    formTypeId, extractPoint.getDocumentField(), signSealId);
-            return content;
-        }
         Detector detector = SEAL_ID_DETECTOR_MAP.get(signSealId);
 
         // 补充参数
@@ -76,7 +70,11 @@ public class DocElementResolver extends AbstractResolver implements Initializing
         params.put("imageId", image.getImageId());
         params.put("threshold", properties.getAlgorithm().getElementMatchThreshold());
         // 计算检测位置的坐标，并切图
-        List<List<Integer>> location = ImgUtils.calcLocation(strPath, extractPoint.getInitPosition());
+        ImgUtils.Shape shape = ImgUtils.getShape(strPath);
+        List<List<Integer>> location = Arrays.asList(Arrays.asList(1, 1), Arrays.asList(shape.getHeight() - 1, shape.getWidth() - 1));
+        if (CollectionUtil.isNotEmpty(extractPoint.getInitPosition())) {
+            location = ImgUtils.calcLocation(shape, extractPoint.getInitPosition());
+        }
         Path snapshot = snapshot(image, location);
         params.put("path", snapshot.toString());
         // TODO 应该缺一个已经提取到的 location
@@ -92,17 +90,18 @@ public class DocElementResolver extends AbstractResolver implements Initializing
 
         // 更新返回值（修正location）
         if (field != null) {
-            ImgUtils.Shape shape = ImgUtils.getShape(strPath);
-            List<List<Integer>> fieldLocation = field.getFieldLocation();
-            int xMin = Math.max(0, fieldLocation.get(0).get(0) - expand),
-                yMin = Math.max(0, fieldLocation.get(0).get(1) - expand),
-                xMax = Math.min(fieldLocation.get(1).get(0) + expand, shape.getHeight()),
-                yMax = Math.min(fieldLocation.get(1).get(1) + expand, shape.getWidth());
-            field.setFieldLocation(Arrays.asList(Arrays.asList(xMin, yMin), Arrays.asList(xMax, yMax)));
-
-            // 将field填入content
-            content.setValueInfo(Collections.singletonList(field));
+            if (CollectionUtil.isNotEmpty(field.getFieldLocation())) {
+                location = field.getFieldLocation();
+                int xMin = Math.max(0, location.get(0).get(0) - expand),
+                    yMin = Math.max(0, location.get(0).get(1) - expand),
+                    xMax = Math.min(location.get(1).get(0) + expand, shape.getHeight()),
+                    yMax = Math.min(location.get(1).get(1) + expand, shape.getWidth());
+                location = Arrays.asList(Arrays.asList(xMin, yMin), Arrays.asList(xMax, yMax));
+            }
+            field.setFieldLocation(location);
         }
+        // 将field填入content
+        content.setValueInfo(Collections.singletonList(field));
         return content;
     }
 

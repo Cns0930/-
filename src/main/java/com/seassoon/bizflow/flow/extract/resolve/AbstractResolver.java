@@ -47,9 +47,9 @@ public abstract class AbstractResolver implements Resolver {
         Rectangle rectangle = new Rectangle(x, y, width, height);
 
         // 截图保存位置（文件命名规则：起始高-起始宽_结束高-结束宽）
-        String strFilename = y + "-" + x + "_" + location.get(1).get(0) + "-" + location.get(1).get(1);
+        String strFilename = y + "-" + x + "_" + location.get(1).get(0) + "-" + location.get(1).get(1) + ".jpg";
         Path snapshot = Paths.get(properties.getLocalStorage(), recordId, "files/snapshot", image.getDocumentLabel(), image.getImageId(), strFilename);
-        ImgUtils.cut(Paths.get(image.getCorrected().getLocalPath()).toFile(), snapshot.toFile(), rectangle);
+        ImgUtils.cut(Paths.get(image.getClassifiedPath()).toFile(), snapshot.toFile(), rectangle);
         return snapshot;
     }
 }
