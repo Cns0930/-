@@ -2,16 +2,15 @@ package com.seassoon.bizflow.flow;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.file.FileNameUtil;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.component.LocalStorage;
-import com.seassoon.bizflow.core.model.Output;
 import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.config.RuleConfig;
 import com.seassoon.bizflow.core.model.config.SortConfig;
 import com.seassoon.bizflow.core.model.extra.*;
 import com.seassoon.bizflow.core.model.ocr.Image;
-import com.seassoon.bizflow.core.model.Input;
 import com.seassoon.bizflow.core.model.ocr.OcrOutput;
 import com.seassoon.bizflow.core.model.rule.Approval;
 import com.seassoon.bizflow.core.util.ConcurrentStopWatch;
@@ -24,17 +23,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collector;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 默认预审流程处理器
@@ -134,7 +132,7 @@ public class BizFlow extends AbstractFlow {
         List<DocumentKV> docKVs = extractor.extract(images, ocrOutputs, checkpoints, mapping);
 
         // 如果帮办有结构化数据，合并到结果中
-        mergeExtraKV1(docKVs, extraKVs, images, checkpoints);
+        mergeExtraKV(docKVs, extraKVs, images, checkpoints);
 
         // 保存提取结果
         localStorage.save(docKVs, "doc_kv.json");
@@ -144,10 +142,10 @@ public class BizFlow extends AbstractFlow {
         return null;
     }
 
-    private void mergeExtraKV1(List<DocumentKV> docKVs, List<ExtraKVInfo> extraKVs, List<Image> images, List<CheckpointConfig> checkpoints) {
+    private void mergeExtraKV(List<DocumentKV> docKVs, List<ExtraKVInfo> extraKVs, List<Image> images, List<CheckpointConfig> checkpoints) {
         // 只合并source为超级帮办的
         if (CollectionUtil.isEmpty(extraKVs) || extraKVs.get(0) == null
-                || !"cjbb".equals(extraKVs.get(0).getSource()) || extraKVs.get(0).getDocumentList() != null) {
+                || !"cjbb".equals(extraKVs.get(0).getSource()) && extraKVs.get(0).getDocumentList() == null) {
             return;
         }
 
@@ -170,16 +168,19 @@ public class BizFlow extends AbstractFlow {
         // 替换每条结构化数据
         docKVs.forEach(documentKV -> documentKV.getDocumentList().forEach(document -> {
             document.setSource(extraKVs.get(0).getSource());
-            document.setPage(checkpointPageMap.get(documentKV.getDocumentLabel()).get(document.getDocumentField()));
+            document.setPage(checkpointPageMap.getOrDefault(documentKV.getDocumentLabel(), Maps.newHashMap())
+                    .getOrDefault(document.getDocumentField(), document.getPage()));
 
             // 根据页码匹配图片ID
-            String imageId = imageMap.get(documentKV.getDocumentLabel()).stream()
+            String imageId = imageMap.getOrDefault(documentKV.getDocumentLabel(), Lists.newArrayList()).stream()
                     .filter(image -> image.getDocumentSource() == 1 && image.getDocumentPage().equals(document.getPage()))
-                    .map(Image::getImageId).findAny().orElse(null);
+                    .map(Image::getImageId).findAny().orElse(document.getImageId());
             document.setImageId(imageId);
 
             // 将提取内容替换为超级帮办的值
-            String fieldContent = extraKVMap.get(documentKV.getDocumentLabel()).get(document.getDocumentField());
+            String defaultContent = document.getValueInfo().stream().findFirst().orElse(Field.of(null, null, 1.0)).getFieldContent();
+            String fieldContent = extraKVMap.getOrDefault(documentKV.getDocumentLabel(), Maps.newHashMap())
+                    .getOrDefault(document.getDocumentField(), defaultContent);
             Field field = Field.of(fieldContent, null, 1.0);
             if (CollectionUtil.isNotEmpty(document.getValueInfo())) {
                 // 如果有多个坐标，合并成一个大坐标（第一个的起始位置和最后一个的结束位置）
@@ -189,126 +190,6 @@ public class BizFlow extends AbstractFlow {
             }
             document.setValueInfo(Collections.singletonList(field));
         }));
-    }
-
-    /**
-     * 合并结构化数据
-     *
-     * @param docKVs 提取结果
-     * @param extraKVs 结构化数据
-     * @param images 图片信息
-     * @param checkpoints 提取配置
-     */
-    private void mergeExtraKV(List<DocumentKV> docKVs, List<ExtraKVInfo> extraKVs, List<Image> images, List<CheckpointConfig> checkpoints) {
-        // 没有结构化数据  没有提取信息  跳过
-        if(CollectionUtils.isEmpty(extraKVs) || CollectionUtils.isEmpty(docKVs)){
-            return;
-        }
-        // 只取第一个（这是什么操作?）
-        ExtraKVInfo extraKVInfo = extraKVs.get(0);
-        // source不为超级帮办跳过  没有内容跳过
-        if(Objects.isNull(extraKVInfo) || !"cjbb".equals(extraKVInfo.getSource()) ||
-                CollectionUtils.isEmpty(extraKVInfo.getDocumentList())){
-            return;
-        }
-
-        // 后面需要多次查找的数据先处理成map
-        // documentLabel -> image
-        Map<String, List<Image>> imageMap = images.stream().collect(Collectors.groupingBy(Image::getDocumentLabel));
-
-        // documentLabel -> documentField -> fieldKV
-        // 冲突时取前面的 防止运行不下去
-        Map<String, Map<String, FieldKV>> kvMap = extraKVInfo.getDocumentList().stream()
-                .collect(Collectors.toMap(Document::getDocumentLabel, document ->
-                        document.getFieldVal().stream().collect(Collectors.toMap(FieldKV::getKey, fieldKV -> fieldKV, (f1, f2) -> f1)), (d1, d2) -> d1));
-
-        // documentLabel -> checkpoint
-        // 冲突时取前面的 防止运行不下去
-        Map<String, CheckpointConfig> checkMap = checkpoints.stream().collect(Collectors.toMap(CheckpointConfig::getFormTypeId, checkpointConfig -> checkpointConfig, (c1, c2) -> c1));
-
-        // 对提取结果遍历进行替换操作
-        docKVs.forEach( documentKV -> {
-            String documentLabel = documentKV.getDocumentLabel();
-            List<Image> imageList = imageMap.getOrDefault(documentLabel, new ArrayList<>());
-            Map<String, FieldKV> kv = kvMap.get(documentLabel);
-            CheckpointConfig checkpointConfig = checkMap.get(documentLabel);
-            List<Content> contentList = documentKV.getDocumentList();
-            contentList.forEach( content -> {
-                String documentField = content.getDocumentField();
-                FieldKV fieldKV = kv.get(documentField);
-
-                // 填入值
-                if(fieldKV != null && !CollectionUtils.isEmpty(fieldKV.getVal())) {
-                    // 如果匹配到
-                    content.setSource(extraKVInfo.getSource());
-                    // 如果有提取结果  替换为一个  取提取的第一个的坐标 和结构化的值
-                    if(CollectionUtils.isEmpty(content.getValueInfo())){
-                        content.setValueInfo(Arrays.asList(Field.of(fieldKV.getVal().get(0), calLocation(content.getValueInfo()), 1.0)));
-                    }else{
-                        // 如果没有提取结果  新增一条
-                        content.setValueInfo(Arrays.asList(Field.of(fieldKV.getVal().get(0), null,1.0)));
-                    }
-                }
-
-                // 填入image_id 和 document_page
-                if(!StringUtils.hasLength(content.getImageId()) && !CollectionUtils.isEmpty(imageList)) {
-                    imageList.stream().filter(image -> image.getDocumentSource() != null && image.getDocumentSource().equals(1)).findAny().ifPresent(image -> {
-                        // 默认情况填充
-                        content.setImageId(image.getImageId());
-                        content.setPage(image.getDocumentPage());
-                        // 多页情况 找到提取点 得到页码
-                        // 用findFirst和算法原先逻辑一致 防止奇怪情况?
-                        if (checkpointConfig != null && checkpointConfig.getMultiPage()) {
-                            checkpointConfig.getExtractPoint().stream().filter(extractPoint ->
-                                    documentField.equals(extractPoint.getDocumentField())).findFirst().flatMap(extractPoint ->
-                                    imageList.stream().filter(img -> img.getDocumentSource() != null && image.getDocumentSource().equals(1) && img.getDocumentPage().equals(extractPoint.getPage())).findFirst()).ifPresent(img -> {
-                                // 根据页码 找到正确的image
-                                content.setImageId(img.getImageId());
-                                content.setPage(img.getDocumentPage());
-                            });
-                        }
-
-                    });
-                }
-
-                // 其他字段填充
-                if(!StringUtils.hasLength(content.getIsTrue())){
-                    // 字符串 true 是个什么操作
-                    content.setIsTrue("true");
-                }
-                if(content.getPage() == null){
-                    content.setPage(-1);
-                }
-
-            });
-        });
-
-    }
-
-    /**
-     * 合并结构化数据 - 合并坐标计算
-     * @param valueInfo
-     * @return
-     */
-    private List<List<Integer>> calLocation(List<Field> valueInfo){
-        if(valueInfo.size() == 1){
-            return valueInfo.get(0).getFieldLocation();
-        }
-        List<List<Integer>> location = new ArrayList<>();
-        for(Field field : valueInfo){
-            if(field.getFieldLocation() != null && field.getFieldLocation().size() == 2){
-                if(location.isEmpty()){
-                    location.add(field.getFieldLocation().get(0));
-                }else if(location.size() == 1){
-                    location.add(field.getFieldLocation().get(1));
-                }else {
-                    // 替换第二个元素
-                    location.remove(1);
-                    location.add(field.getFieldLocation().get(1));
-                }
-            }
-        }
-        return location;
     }
 
     @Override

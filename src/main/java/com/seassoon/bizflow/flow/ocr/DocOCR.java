@@ -1,7 +1,9 @@
 package com.seassoon.bizflow.flow.ocr;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.file.FileNameUtil;
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
@@ -202,7 +204,10 @@ public class DocOCR implements OCR {
         ocrOutput.setImageName(ocrResult.getImageName());
         ocrOutput.setOcrResultWithoutLineMerge(ocrResult);
 
-        List<Block> blocks = ocrResult.getBlocks();
+        List<Block> blocks = ocrResult.getBlocks().stream()
+                .filter(block -> StrUtil.isNotBlank(block.getText()) && CollectionUtil.isNotEmpty(block.getPosition())
+                        && CollectionUtil.isNotEmpty(block.getCharacters()) && block.getScore() != null)
+                .collect(Collectors.toList());
 
         // lineMerged表示该行已经合并到上一行
         Boolean[] lineMerged = blocks.stream().map(block -> false).toArray(Boolean[]::new);
