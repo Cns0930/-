@@ -109,7 +109,7 @@ public abstract class DocElementDetector implements Detector {
         String strURL = properties.getIntegration().get(BizFlowProperties.Service.DOC_ELEMENT);
         Map<String, String> params = images.stream().collect(Collectors.toMap(image -> image.getImageId() + ".jpg", image -> image.getCorrected().getUrl()));
         String strQueryParam = JSONUtils.writeValueAsString(params);
-        String strUrl = strURL + "?" + strQueryParam;
+        String strUrl = strURL + "?img_json=" + strQueryParam;
         ElementResponse response = httpCaller.post(strUrl, new HashMap<>(), ElementResponse.class);
         if (!response.getStatus().equals("ok")) {
             logger.error("调用元素检测接口返回失败：{}", response);

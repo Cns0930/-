@@ -38,7 +38,7 @@ public class StampDetector extends DocElementDetector{
             }
         }
         // fixme
-        return Field.of(null, null, 0);
+        return Field.of(null, null, 0.0D);
     }
 
     /**

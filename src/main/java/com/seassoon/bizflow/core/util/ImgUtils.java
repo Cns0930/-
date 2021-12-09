@@ -28,13 +28,12 @@ public class ImgUtils extends ImgUtil {
     /**
      * 计算一张图片的相对坐标
      *
-     * @param path  图片路径
+     * @param shape {@link Shape}
      * @param ratio 计算系数
      * @return 计算后的坐标
      */
-    public static List<List<Integer>> calcLocation(String path, List<List<BigDecimal>> ratio) {
+    public static List<List<Integer>> calcLocation(Shape shape, List<List<BigDecimal>> ratio) {
         // 读取图片的宽高
-        Shape shape = getShape(path);
         if (CollectionUtil.isNotEmpty(ratio)) {
             Integer a = ratio.get(0).get(0).multiply(BigDecimal.valueOf(shape.getHeight())).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
             Integer b = ratio.get(0).get(1).multiply(BigDecimal.valueOf(shape.getWidth())).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();

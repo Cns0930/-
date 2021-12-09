@@ -3,6 +3,7 @@ package com.seassoon.bizflow.core.model.extra;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -12,10 +13,10 @@ import java.util.List;
 @EqualsAndHashCode
 public class Field {
     private String fieldContent;
-    private List<List<Integer>> fieldLocation;
-    private Double score;
+    private List<List<Integer>> fieldLocation = new ArrayList<>();
+    private Double score = 1.0;
 
-    public static Field of(String fieldContent, List<List<Integer>> fieldLocation, double score) {
+    public static Field of(String fieldContent, List<List<Integer>> fieldLocation, Double score) {
         Field field = new Field();
         field.setFieldContent(fieldContent);
         field.setFieldLocation(fieldLocation);

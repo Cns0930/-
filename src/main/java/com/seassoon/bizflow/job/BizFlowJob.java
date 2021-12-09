@@ -61,13 +61,13 @@ public class BizFlowJob {
         ConcurrentStopWatch stopWatch = new ConcurrentStopWatch();
         stopWatch.start(input.getRecordId());
 
-        // 保存本地input.json
-        localStorage.save(input, "input.json");
-
         // 初始化BizFlow上下文
         BizFlowContextHolder.setInput(input);
         BizFlowContextHolder.putMDC(input.getRecordId());
         logger.info("从Redis获取事项成功：{} - {}", input.getRecordId(), input.getSid());
+
+        // 保存本地input.json
+        localStorage.save(input, "input.json");
 
         // 交给流程处理器处理
         Output output = flow.process(input);
@@ -91,7 +91,7 @@ public class BizFlowJob {
 
     private Input readFile() {
         try {
-            Path path = Paths.get("C:\\Users\\lw900\\Downloads\\1458638206939873282\\input.json");
+            Path path = Paths.get("C:\\Users\\lw900\\Downloads\\1447849761265856514\\input.json");
             String str = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             return JSONUtils.readValue(str, Input.class);
         } catch (IOException e) {

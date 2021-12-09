@@ -1,7 +1,9 @@
 package com.seassoon.bizflow.flow.ocr;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.file.FileNameUtil;
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
@@ -52,9 +54,9 @@ public class DocOCR implements OCR {
         String target = Paths.get(properties.getLocalStorage(), recordId, "/files/src").toString();
         List<Pair<String, String>> urls = images.stream()
                 .map(image -> {
-                    String strExtension = FileNameUtil.extName(image.getCorrectedImageUrl());
-                    String strFilename = image.getImageId() + "." + strExtension;
-                    return Pair.of(strFilename, image.getCorrectedImageUrl());
+                    String url = image.getCorrected().getUrl();
+                    String strFilename = image.getImageId() + "." + FileNameUtil.extName(url);
+                    return Pair.of(strFilename, url);
                 }).collect(Collectors.toList());
 
         List<String> files = fileDownloader.download(urls, target).stream().map(strPath -> {
@@ -202,7 +204,10 @@ public class DocOCR implements OCR {
         ocrOutput.setImageName(ocrResult.getImageName());
         ocrOutput.setOcrResultWithoutLineMerge(ocrResult);
 
-        List<Block> blocks = ocrResult.getBlocks();
+        List<Block> blocks = ocrResult.getBlocks().stream()
+                .filter(block -> StrUtil.isNotBlank(block.getText()) && CollectionUtil.isNotEmpty(block.getPosition())
+                        && CollectionUtil.isNotEmpty(block.getCharacters()) && block.getScore() != null)
+                .collect(Collectors.toList());
 
         // lineMerged表示该行已经合并到上一行
         Boolean[] lineMerged = blocks.stream().map(block -> false).toArray(Boolean[]::new);

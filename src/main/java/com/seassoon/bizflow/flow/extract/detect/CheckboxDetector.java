@@ -43,7 +43,7 @@ public class CheckboxDetector extends DocElementDetector{
                     return detectCheckboxContent(params, "right");
             }
         }
-        return Field.of(null, null, 0);
+        return Field.of(null, null, 0.0D);
     }
 
     /**

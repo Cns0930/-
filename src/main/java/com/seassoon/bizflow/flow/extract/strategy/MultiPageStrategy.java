@@ -5,13 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * 单页提取策略
- *
+ * 多页提取策略
  * @author lw900925 (liuwei@seassoon.com)
  */
 @Component
-public class SinglePageStrategy extends AbstractStrategy {
+public class MultiPageStrategy extends AbstractStrategy {
 
-    /** logger */
-    private static final Logger logger = LoggerFactory.getLogger(SinglePageStrategy.class);
+    private static final Logger logger = LoggerFactory.getLogger(MultiPageStrategy.class);
 }

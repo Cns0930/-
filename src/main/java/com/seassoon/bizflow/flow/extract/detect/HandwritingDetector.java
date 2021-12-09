@@ -35,7 +35,7 @@ public class HandwritingDetector extends DocElementDetector {
         Elements elements = (Elements) params.get("elements");
         String signSealId = (String) params.get("signSealId");
         if (elements == null || !msgMap.containsKey(signSealId)) {
-            return Field.of(null, null, 0);
+            return Field.of(null, null, 0.0D);
         }
 
         // 检测区域的坐标
