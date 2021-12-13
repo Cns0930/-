@@ -10,7 +10,11 @@
             "document_name": "公司登记（备案）申请书",
             "document_label": "1",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/644ab3686587463ea9bf8c71d63a9490.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/3785278966034541aa77e5a777fa0cc2.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 4,
             "process_mode": 0,
@@ -21,7 +25,11 @@
             "document_name": "公司登记（备案）申请书",
             "document_label": "1",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/upload/tmp/2021-10-13/16340292698084004.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/616ce0af270b4e219486493a0dcc25f2.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 2,
             "total_pages": 4,
             "process_mode": 0,
@@ -32,7 +40,11 @@
             "document_name": "公司登记（备案）申请书",
             "document_label": "1",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/upload/tmp/2021-10-13/16340292711502122.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/fb12cfb28ab8409dbf09ff46c79a61f3.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 3,
             "total_pages": 4,
             "process_mode": 0,
@@ -43,7 +55,11 @@
             "document_name": "公司登记（备案）申请书",
             "document_label": "1",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/0abf97cedf6d4390a85792ec4ce29cfa.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/3f40f4074a934ab496416f69a512c31e.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 4,
             "total_pages": 4,
             "process_mode": 0,
@@ -54,7 +70,11 @@
             "document_name": "法定代表人信息",
             "document_label": "2",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/4a03f5c839eb428a89df5d9893622615.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/691cdb91c9cb4dc5a4d26fc720562177.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 1,
             "process_mode": 0,
@@ -65,7 +85,11 @@
             "document_name": "董事、监事、经理信息",
             "document_label": "3",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/a0288814c3114a8a9633c884d200af65.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/0c99ac8ca79d42528a91f316d570dd50.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 2,
             "process_mode": 0,
@@ -76,7 +100,11 @@
             "document_name": "董事、监事、经理信息",
             "document_label": "3",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/05a1e6a2c95947cb9e6af54530b0a7fd.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/c3c4b43ddaaa4e43a70918a24454a5d0.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 2,
             "total_pages": 2,
             "process_mode": 0,
@@ -87,7 +115,11 @@
             "document_name": "清算组成员信息",
             "document_label": "4",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/0a33cadb37b34588babfdb5633acafba.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/96b65da3d5d74b3b82d90a82f010e375.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 1,
             "process_mode": 0,
@@ -98,7 +130,11 @@
             "document_name": "股东（发起人）、外国投资者出资情况",
             "document_label": "5",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/12ad74e68e184d4ba9c5efd69bd114bd.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/fceea509ffe54572bf940704444dec66.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 1,
             "process_mode": 0,
@@ -109,7 +145,11 @@
             "document_name": "设立和经营范围变更承诺书",
             "document_label": "6",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/31b522a50a4e4902b30ff97b28d0eff2.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/08c17d08103745c2a86fef6caf9afcae.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 1,
             "process_mode": 0,
@@ -120,7 +160,11 @@
             "document_name": "外商投资企业法律文件送达授权委托书",
             "document_label": "7",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/a45ca6e2da534991a43acd27a8d29e79.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/56f42c156ce947f3ab05f195d53d0191.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 1,
             "process_mode": 0,
@@ -131,7 +175,11 @@
             "document_name": "不涉及《负面清单》承诺书",
             "document_label": "8",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/3e02252ed74b45fda25a0fdfabc4c088.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/e8e534b3e6f64ab5bb8ce936fa19558b.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 1,
             "process_mode": 0,
@@ -142,7 +190,11 @@
             "document_name": "股东会决议",
             "document_label": "12",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/d5d9dab64f5646d0b62cf3f344d64085.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/585d2df75a6b444c9210cdf7eca5ae2d.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 2,
             "process_mode": 0,
@@ -153,7 +205,11 @@
             "document_name": "股东会决议",
             "document_label": "12",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/6ec585b8db2446a49a26fe17fc495935.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/7d89953be339454ca0f2e89b40f79401.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 2,
             "total_pages": 2,
             "process_mode": 0,
@@ -164,7 +220,11 @@
             "document_name": "章程修正案",
             "document_label": "15",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/97f15af30ea440f7a762d1cbf724de77.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/fd7c19944e5d46f49d731cf09d0b885a.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 2,
             "process_mode": 0,
@@ -175,7 +235,11 @@
             "document_name": "章程修正案",
             "document_label": "15",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/e8e34f6aa3a8466e9693589ff2afd235.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/655d8b8bc6914b9fab32cb0ef3db92b1.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 2,
             "process_mode": 0,
@@ -186,7 +250,11 @@
             "document_name": "章程修正案",
             "document_label": "15",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/6da77d95257d4720bb2a1ddf206f0318.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/3873ded74e6747c2b5caf3ae98f21bce.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 2,
             "total_pages": 2,
             "process_mode": 0,
@@ -197,7 +265,11 @@
             "document_name": "企业名称预先核准申请书",
             "document_label": "21",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/12c3941a9e924bcd9c1dfd4a0456b103.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/b74484c56bc64feab81ec1171b0ec2c6.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 1,
             "total_pages": 4,
             "process_mode": 0,
@@ -208,7 +280,11 @@
             "document_name": "企业名称预先核准申请书",
             "document_label": "21",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/e35db3714cd34f0c89d122d89be20819.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/c91115bf5aa648e7a35685c93a01ece7.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 2,
             "total_pages": 4,
             "process_mode": 0,
@@ -219,7 +295,11 @@
             "document_name": "企业名称预先核准申请书",
             "document_label": "21",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/7e0132731c8740f19587327480437c44.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/e509583674514d61a7b621aa461720eb.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 3,
             "total_pages": 4,
             "process_mode": 0,
@@ -230,7 +310,11 @@
             "document_name": "企业名称预先核准申请书",
             "document_label": "21",
             "document_source": 1,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/fe6f2ece393e4b9692f14a970e70a575.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/0835a155b9504a60ab6041bb3ec6dfbd.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 4,
             "total_pages": 4,
             "process_mode": 0,
@@ -241,7 +325,11 @@
             "document_name": "",
             "document_label": "0",
             "document_source": 0,
-            "corrected_image_url": "http://10.0.96.19:30496/zhengwu/suanfa/main/8ff1ab2349c9467eadc2a03a9b76b53b.jpg",
+            "corrected_image_url": "",
+            "corrected": {
+                "url": "http://10.0.96.19:30496/zhengwu/suanfa/main/0ae17733c260409e9841ed1b6a090928.jpg",
+                "rotation_angle": 0
+            },
             "document_page": 0,
             "total_pages": 0,
             "process_mode": 0,
@@ -8674,6 +8762,8 @@
             "17": "info_extract.strategies.UnifiedStrategy_multi_page",
             "SC-F06": "info_extract.strategies.yingyezhizhao",
             "1": "info_extract.strategies.UnifiedStrategy_multi_page",
+            "5": "info_extract.strategies.UnifiedStrategy_single_page",
+            "6": "info_extract.strategies.UnifiedStrategy_single_page",
             "3": "info_extract.strategies.dongshijianshijingli",
             "unified": "info_extract.strategies.UnifiedStrategy_single_page",
             "SC-F07": "info_extract.strategies.yingyezhizhao",

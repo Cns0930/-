@@ -71,21 +71,17 @@ public class DocOCR implements OCR {
             return path.toString();
         }).collect(Collectors.toList());
 
-        // 2.图片倾斜矫正/方向矫正
-        // TODO 需要Python来做，后续提供接口调用，
-        // 接口返回矫正后的图片的URL和角度，合并。
-        // 将图片链接填入Image的correctedImageUrl
-        // 将图片保存到本地，保存路径为 /files/corrected
-        // 后续给OCR识别时候用correctedImageUrl
+        // 2.更新图片本地路径
+        images.forEach(image -> {
+            String strPath = files.stream().filter(str -> str.contains(image.getImageId()))
+                    .findAny().orElseThrow(() -> new NullPointerException("图片未下载成功"));
+            image.getCorrected().setLocalPath(strPath);
+        });
 
-        // 3.合并倾斜角度和图像方向角度
-
-        // 4.上传矫正后的图片
-
-        // 5.OCR识别处理
+        // 3.OCR识别处理
         List<OcrResult> ocrResults = post(files.stream().map(Paths::get).collect(Collectors.toList()));
 
-        // 6.处理OCR结果
+        // 4.处理OCR结果
         return ocrResults.stream()
                 .map(this::sortBlock) // 对Block排序
                 .map(ocrResult -> mergeLine(ocrResult, -1)) // 行合并
@@ -126,7 +122,6 @@ public class DocOCR implements OCR {
             ocrResult.setImageExtension("." + strExtension);
             ocrResult.setBlocks(JSONUtils.readValue(ocrResultNode.get("blocks").toString(), new TypeReference<List<Block>>() {
             }));
-            ocrResult.setImagePath(file.toString());
 
             logger.info("[{}/{}]个图片已处理：{}", indexAI.incrementAndGet(), files.size(), strFilename);
             return ocrResult;

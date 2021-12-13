@@ -1,11 +1,7 @@
 package com.seassoon.bizflow.core.util;
 
-import org.springframework.util.ObjectUtils;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 集合相关工具类
@@ -28,29 +24,5 @@ public class Collections3 {
             list.addAll(ts);
         }
         return list;
-    }
-
-    private static boolean checkValue(Object object) {
-        if (object instanceof String && "".equals(object)) {
-            return false;
-        }
-        if (ObjectUtils.isEmpty(object)) {
-            return false;
-        }
-        return true;
-    }
-
-    public static Map<String, Object> parseMapForFilter(Map<String, Object> map) {
-        if (map == null) {
-            return null;
-        } else {
-            map = map.entrySet().stream()
-                    .filter((e) -> checkValue(e.getValue()))
-                    .collect(Collectors.toMap(
-                            (e) -> (String) e.getKey(),
-                            (e) -> e.getValue()
-                    ));
-        }
-        return map;
     }
 }

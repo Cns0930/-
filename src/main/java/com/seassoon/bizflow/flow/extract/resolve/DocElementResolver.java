@@ -7,6 +7,7 @@ import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.extra.Content;
 import com.seassoon.bizflow.core.model.extra.Field;
 import com.seassoon.bizflow.core.model.ocr.Image;
+import com.seassoon.bizflow.core.model.ocr.Shape;
 import com.seassoon.bizflow.core.util.ImgUtils;
 import com.seassoon.bizflow.flow.extract.detect.*;
 import org.slf4j.Logger;
@@ -70,14 +71,13 @@ public class DocElementResolver extends AbstractResolver implements Initializing
         params.put("imageId", image.getImageId());
         params.put("threshold", properties.getAlgorithm().getElementMatchThreshold());
         // 计算检测位置的坐标，并切图
-        ImgUtils.Shape shape = ImgUtils.getShape(strPath);
+        Shape shape = ImgUtils.getShape(strPath);
         List<List<Integer>> location = Arrays.asList(Arrays.asList(1, 1), Arrays.asList(shape.getHeight() - 1, shape.getWidth() - 1));
         if (CollectionUtil.isNotEmpty(extractPoint.getInitPosition())) {
             location = ImgUtils.calcLocation(shape, extractPoint.getInitPosition());
         }
         Path snapshot = snapshot(image, location);
         params.put("path", snapshot.toString());
-        // TODO 应该缺一个已经提取到的 location
 
         // 检测区域
         List<List<Integer>> detectArea = Arrays.asList(

@@ -2,6 +2,7 @@ package com.seassoon.bizflow.flow.classify.matcher;
 
 import cn.hutool.core.util.StrUtil;
 import com.seassoon.bizflow.core.model.config.SortConfig;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -10,7 +11,8 @@ import java.util.List;
  *
  * @author lw900925 (liuwei@seassoon.com)
  */
-public class FullTextRegularMatcher extends RegularMatcher {
+@Component
+public class FullTextRegularMatcher extends AbstractMatcher {
 
     @Override
     protected boolean matchPattern(List<String> patterns, List<String> texts) {

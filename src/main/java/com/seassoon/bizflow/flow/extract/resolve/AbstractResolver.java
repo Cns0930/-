@@ -1,13 +1,18 @@
 package com.seassoon.bizflow.flow.extract.resolve;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.seassoon.bizflow.config.BizFlowProperties;
 import com.seassoon.bizflow.core.model.config.CheckpointConfig;
 import com.seassoon.bizflow.core.model.extra.Content;
 import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.util.ImgUtils;
 import com.seassoon.bizflow.support.BizFlowContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.bind.validation.ValidationErrors;
 
+import javax.xml.bind.ValidationException;
 import java.awt.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +23,8 @@ import java.util.Map;
  * @author lw900925 (liuwei@seassoon.com)
  */
 public abstract class AbstractResolver implements Resolver {
+
+    private static final Logger logger = LoggerFactory.getLogger(AbstractResolver.class);
 
     @Autowired
     private BizFlowProperties properties;
@@ -51,5 +58,31 @@ public abstract class AbstractResolver implements Resolver {
         Path snapshot = Paths.get(properties.getLocalStorage(), recordId, "files/snapshot", image.getDocumentLabel(), image.getImageId(), strFilename);
         ImgUtils.cut(Paths.get(image.getClassifiedPath()).toFile(), snapshot.toFile(), rectangle);
         return snapshot;
+    }
+
+    /**
+     * 检查extractPoint页码和image页码是否一致
+     *
+     * @param extractPoint {@link com.seassoon.bizflow.core.model.config.CheckpointConfig.ExtractPoint}
+     * @param formTypeId   材料分类
+     */
+    protected void checkPage(CheckpointConfig.ExtractPoint extractPoint, Image image, String formTypeId) {
+        if (!extractPoint.getPage().equals(image.getDocumentPage())) {
+            throw new RuntimeException(String.format("材料[%s]字段[%s]已分类图片页码与checkpoint页码不匹配：image=%s, checkpoint=%s",
+                    formTypeId, extractPoint.getDocumentField(), image.getDocumentPage(), extractPoint.getPage()));
+        }
+    }
+
+    /**
+     * 检查是否配置字段别名
+     *
+     * @param extractPoint {@link com.seassoon.bizflow.core.model.config.CheckpointConfig.ExtractPoint}
+     * @param formTypeId   材料分类
+     */
+    protected void checkAlias(CheckpointConfig.ExtractPoint extractPoint, String formTypeId) {
+        if (CollectionUtil.isEmpty(extractPoint.getAlias())) {
+            throw new RuntimeException(String.format("材料[%s]字段[%s]提取点未配置字段别名",
+                    formTypeId, extractPoint.getDocumentField()));
+        }
     }
 }

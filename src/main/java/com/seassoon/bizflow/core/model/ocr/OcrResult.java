@@ -17,6 +17,4 @@ public class OcrResult {
     private List<Block> blocks = new ArrayList<>();
     private String imageName;
     private String imageExtension;
-    @JsonIgnore
-    private String imagePath;
 }

@@ -69,7 +69,7 @@ public class BizFlow extends AbstractFlow {
         localStorage.save(ocrOutputs, "ocr_output.json");
 
         stopWatch.stop();
-        logger.info("图片OCR处理完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
+        logger.info("#step1:图片OCR处理完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
         return ocrOutputs;
     }
 
@@ -118,7 +118,7 @@ public class BizFlow extends AbstractFlow {
         localStorage.save(typedImages, "classified_images.json");
 
         stopWatch.stop();
-        logger.info("文档分类完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
+        logger.info("#step2:文档分类完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
         return typedImages;
     }
 
@@ -138,7 +138,7 @@ public class BizFlow extends AbstractFlow {
         localStorage.save(docKVs, "doc_kv.json");
 
         stopWatch.stop();
-        logger.info("文档数据提取完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
+        logger.info("#step3:文档数据提取完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
         return null;
     }
 
@@ -202,7 +202,7 @@ public class BizFlow extends AbstractFlow {
         localStorage.save(docKVs, "rule_approvals.json");
 
         stopWatch.stop();
-        logger.info("规则引擎执行完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
+        logger.info("#step4:规则引擎执行完成，共耗时{}秒", stopWatch.getTotalTimeSeconds());
         return approvals;
     }
 }

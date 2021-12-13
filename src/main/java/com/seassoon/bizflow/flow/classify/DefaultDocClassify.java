@@ -1,25 +1,21 @@
 package com.seassoon.bizflow.flow.classify;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.google.common.collect.Maps;
 import com.seassoon.bizflow.config.BizFlowProperties;
-import com.seassoon.bizflow.core.model.extra.ExtraKVInfo;
-import com.seassoon.bizflow.core.model.extra.FieldKV;
-import com.seassoon.bizflow.core.model.ocr.Image;
 import com.seassoon.bizflow.core.model.config.SortConfig;
 import com.seassoon.bizflow.core.model.extra.Document;
-import com.seassoon.bizflow.core.model.ocr.Block;
-import com.seassoon.bizflow.core.model.ocr.OcrOutput;
-import com.seassoon.bizflow.core.model.ocr.OcrResult;
-import com.seassoon.bizflow.core.model.ocr.Position;
-import com.seassoon.bizflow.core.util.Collections3;
+import com.seassoon.bizflow.core.model.extra.ExtraKVInfo;
+import com.seassoon.bizflow.core.model.extra.FieldKV;
+import com.seassoon.bizflow.core.model.ocr.*;
+import com.seassoon.bizflow.core.util.ImgUtils;
 import com.seassoon.bizflow.core.util.TextUtils;
 import com.seassoon.bizflow.flow.classify.matcher.*;
 import com.seassoon.bizflow.flow.classify.special.DrivingLicenceDetect;
 import com.seassoon.bizflow.flow.classify.special.IdCardDetect;
 import com.seassoon.bizflow.flow.classify.special.SpecialDetect;
-import com.seassoon.bizflow.flow.classify.special.SpecialServer;
-import com.seassoon.bizflow.flow.extract.detect.Detector;
-import com.seassoon.bizflow.flow.extract.detect.HandwritingDetector;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -31,19 +27,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import javax.annotation.PostConstruct;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,7 +40,7 @@ import java.util.stream.Collectors;
  * @author lw900925 (liuwei@seassoon.com)
  */
 @Component
-public class DefaultDocClassify implements DocClassify {
+public class DefaultDocClassify implements DocClassify, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultDocClassify.class);
 
@@ -62,21 +49,27 @@ public class DefaultDocClassify implements DocClassify {
      */
     private final Map<String, Matcher> MATCHERS = new HashMap<>();
     private final Map<String, SpecialDetect> SPECIAL_DETECT_MAP = new HashMap<>();
+
+    private double threshold = 0;
+
     @Autowired
     private BizFlowProperties properties;
     @Autowired
     private ApplicationContext appContext;
 
-    @PostConstruct
-    private void postConstruct() {
+    @Override
+    public void afterPropertiesSet() throws Exception {
         // 初始化分类匹配器
-        MATCHERS.put("regular", new RegularMatcher());
-        MATCHERS.put("Regular", new FullTextRegularMatcher());
-        MATCHERS.put("similar", new SimilarMatcher(properties.getAlgorithm().getMatchThreshold()));
-        MATCHERS.put("extra", new ExtraMatcher());
+        MATCHERS.put("regular", appContext.getBean(RegularMatcher.class));
+        MATCHERS.put("Regular", appContext.getBean(FullTextRegularMatcher.class));
+        MATCHERS.put("similar", appContext.getBean(SimilarMatcher.class));
+        MATCHERS.put("extra", appContext.getBean(ExtraMatcher.class));
+
         //特殊材料分类实例
         SPECIAL_DETECT_MAP.put("ID_CARD", appContext.getBean(IdCardDetect.class));
         SPECIAL_DETECT_MAP.put("DRIVING_LICENCE", appContext.getBean(DrivingLicenceDetect.class));
+
+        threshold = properties.getAlgorithm().getMatchThreshold();
     }
 
     @Override
@@ -97,21 +90,26 @@ public class DefaultDocClassify implements DocClassify {
         Map<String, List<String>> docTexts = ocrOutputs.stream().collect(Collectors.toMap(OcrOutput::getImageName, ocrOutput ->
                 ocrOutput.getOcrResult().getBlocks().stream().map(Block::getText).collect(Collectors.toList())));
         //用与后面判断分类是否正确 先复制一份
-        List<Image> copyImages = images.stream().map(image -> image.clone()).collect(Collectors.toList());
+        List<Image> copyImages = images.stream().map(ObjectUtil::clone).collect(Collectors.toList());
         // 文档标题
-        Map<String, Object> docTitles = Collections3.parseMapForFilter(ocrOutputs.stream().collect(Collectors.toMap(OcrOutput::getImageName, ocrOutput ->
-                getTitle(ocrOutput.getOcrResultWithoutLineMerge()))));
+        Map<String, String> titleMap = ocrOutputs.stream().collect(Collectors.toMap(OcrOutput::getImageName, ocrOutput -> {
+            OcrResult ocrResult = ocrOutput.getOcrResultWithoutLineMerge();
+            String strPath = images.stream().filter(image -> image.getImageId().equals(ocrOutput.getImageName()))
+                    .map(Image::getCorrected).map(Image.Corrected::getLocalPath)
+                    .findAny().orElseThrow(() -> new NullPointerException("未匹配到对应的图片"));
+            return getTitle(ocrResult, strPath);
+        }));
+        Map<String, String> docTitles = Maps.filterValues(titleMap, StrUtil::isNotBlank);
+
         // 初始化计数器
         AtomicInteger skipAI = new AtomicInteger(0),
                 classifiedAI = new AtomicInteger(0);
 
         // 图片分类
         images.forEach(image -> {
-            classifiedAI.getAndAdd(1);
             // 如果材料来源是超级帮办并且有分类，跳过分类
             if (image.getDocumentSource() == 1 && !image.getDocumentLabel().equals("0")
                     && image.getDocumentPage() != null && image.getTotalPages() != null) {
-                logger.info("{}图片来源超级帮办且已有分类结果 无须系统分类, 剩余未分类图片数量{}", image.getImageId(), images.size() - classifiedAI.get());
                 // 分类配置
                 List<List<SortConfig.TypeIdField>> typeIdFields = origTypeIdField.get(image.getDocumentLabel());
                 if (CollectionUtil.isNotEmpty(typeIdFields)) {
@@ -136,14 +134,13 @@ public class DefaultDocClassify implements DocClassify {
             } else {
                 // TODO apiInfo中已有分类结果，跳过分类
 
-                logger.info("{}图片分类中, 剩余未分类图片数量{}", image.getImageId(), images.size() - classifiedAI.get());
                 // 获取图片OCR结果，进行分类
                 List<String> texts = docTexts.get(image.getImageId());
                 // 根据ocr结果-规则进行分类；
-                matchClassif(image, typeIdField.get("R"), texts, docTitles, copyImages, true);
+                matchType(image, typeIdField.get("R"), texts, docTitles, copyImages, true);
                 // 根据调用结构化数据中的字段进行额外补充细分;
                 if ("0".equals(image.getDocumentLabel()) && !CollectionUtils.isEmpty(typeIdField.get("X"))) {
-                    matchClassif(image, typeIdField.get("X"), texts, docTitles, copyImages, true);
+                    matchType(image, typeIdField.get("X"), texts, docTitles, copyImages, true);
                 }
                 // step2. 获取身份证复印件，驾驶证分类 特殊分类
                 if ("0".equals(image.getDocumentLabel())) {
@@ -152,24 +149,30 @@ public class DefaultDocClassify implements DocClassify {
                         boolean isIdCard = key.equals("SC-E02") && SPECIAL_DETECT_MAP.get("ID_CARD").preProcessing(image);
                         boolean isDrivingLicence = key.equals("JD-XS01") && SPECIAL_DETECT_MAP.get("DRIVING_LICENCE").preProcessing(image);
                         if ((isIdCard && !isDrivingLicence) || (!isIdCard && isDrivingLicence)) {
-                            image.saveResult(image, key, 1, 1);
+                            image.setDocumentLabel(key);
+                            image.setDocumentPage(1);
+                            image.setTotalPages(1);
                         }
                     });
                 }
                 // step3再次对没有分出类别的图片 降低要求再次分类(纠错分类)
                 if ("0".equals(image.getDocumentLabel())) {
-                    matchClassif(image, typeIdField.get("R"), texts, docTitles, copyImages, false);
+                    matchType(image, typeIdField.get("R"), texts, docTitles, copyImages, false);
                     if ("0".equals(image.getDocumentLabel()) && !CollectionUtils.isEmpty(typeIdField.get("X"))) {
-                        matchClassif(image, typeIdField.get("X"), texts, docTitles, copyImages, false);
+                        matchType(image, typeIdField.get("X"), texts, docTitles, copyImages, false);
                     }
                 }
+
+                // 更新计数器
+                classifiedAI.incrementAndGet();
             }
             // TODO # step3.根据材料列表中，未分类材料的前后两张材料的分类，是否需要基于扫描顺序进行补充分类 对未分类材料进行follow_sort (看配置文件中都没有那个属性了 python代码直接设了个false没进过这个分类 就没弄了)
 
 
         });
 
-        logger.info("共有 {} 张图片，其中未分类 {} 张", images.size(), images.stream().filter(f -> f.getDocumentLabel().equals("0")).count());
+        // 打印分类结果
+        logger.info("共有{}张图片，超级帮办材料{}张已跳过，未分类{}张", images.size(), skipAI.get(), images.size() - (skipAI.get() + classifiedAI.get()));
         return images;
     }
 
@@ -318,9 +321,10 @@ public class DefaultDocClassify implements DocClassify {
      * 标题只能有一行，多行的识别不出
      *
      * @param ocrResult {@link OcrResult}
+     * @param strPath   图片文件路径
      * @return 文档标题，若无标题，返回null
      */
-    private String getTitle(OcrResult ocrResult) {
+    private String getTitle(OcrResult ocrResult, String strPath) {
         // 检查文本方向
         boolean isHorizontal = checkTextHorizontal(ocrResult);
 
@@ -347,7 +351,7 @@ public class DefaultDocClassify implements DocClassify {
         }
 
         // 图片分辨率
-        Pair<Integer, Integer> resolution = readImageResolution(Paths.get(ocrResult.getImagePath()));
+        Shape shape = ImgUtils.getShape(strPath);
 
         // 文档边界
         Pair<Integer, Integer> textBoard = calcTextBoard(ocrResult.getBlocks(), isHorizontal);
@@ -359,10 +363,10 @@ public class DefaultDocClassify implements DocClassify {
                     // 在文档中居中，认为是标题
                     int diffVal = 0, edgeDiffVal = 0;
                     if (isHorizontal) {
-                        diffVal = Math.abs((resolution.getLeft() - block.getPosition().get(1).getX()) - block.getPosition().get(0).getX());
+                        diffVal = Math.abs((shape.getWidth() - block.getPosition().get(1).getX()) - block.getPosition().get(0).getX());
                         edgeDiffVal = Math.abs((textBoard.getRight() - block.getPosition().get(1).getX()) - (block.getPosition().get(0).getX() - textBoard.getLeft()));
                     } else {
-                        diffVal = Math.abs((resolution.getRight() - block.getPosition().get(2).getY()) - block.getPosition().get(1).getY());
+                        diffVal = Math.abs((shape.getHeight() - block.getPosition().get(2).getY()) - block.getPosition().get(1).getY());
                         edgeDiffVal = Math.abs((textBoard.getRight() - block.getPosition().get(2).getY()) - (block.getPosition().get(1).getY() - textBoard.getLeft()));
                     }
 
@@ -406,23 +410,6 @@ public class DefaultDocClassify implements DocClassify {
     }
 
     /**
-     * 读取图片分辨率（宽 * 高）
-     *
-     * @param path 图片路径
-     * @return {@link Pair}对象，left为宽，right为高
-     */
-    private Pair<Integer, Integer> readImageResolution(Path path) {
-        // 读取图片高度和宽度
-        try (InputStream inputStream = Files.newInputStream(path)) {
-            BufferedImage image = ImageIO.read(inputStream);
-            return Pair.of(image.getWidth(), image.getHeight());
-        } catch (IOException e) {
-            logger.error("读取图片文件失败 - " + e.getMessage(), e);
-            return Pair.of(0, 0);
-        }
-    }
-
-    /**
      * 检查文本方向是否为水平
      *
      * @param ocrResult {@link OcrResult}
@@ -439,72 +426,59 @@ public class DefaultDocClassify implements DocClassify {
         });
     }
 
-    /**
-     * 匹配分类信息
-     *
-     * @param image       图片分类信息
-     * @param typeIdField 配置信息(存在普通分类和补充分类)
-     * @param isStrict    是否严格分类
-     */
-    private void matchClassif(Image image, Map<String, List<List<SortConfig.TypeIdField>>> typeIdField, List<String> texts, Map<String, Object> docTitles, List<Image> copyImages, Boolean isStrict) {
+    private void matchType(Image image, Map<String, List<List<SortConfig.TypeIdField>>> typeIdField, List<String> texts,
+                           Map<String, String> docTitles, List<Image> copyImages, boolean strict) {
         for (String typeId : typeIdField.keySet()) {
-            List<List<SortConfig.TypeIdField>> typeIdFieldInfoList = typeIdField.get(typeId);
-            //匹配
-            match(image, typeIdFieldInfoList, texts, typeId, docTitles, copyImages, isStrict);
-        }
-    }
-
-    /**
-     * @param image               分类图片
-     * @param typeIdFieldInfoList 配置列表
-     * @param texts               ocr
-     * @param typeId              材料
-     * @param docTitles           图片标题
-     * @param copyImages          copy的图片信息
-     * @param isStrict            是否严格分类
-     */
-    public void match(Image image, List<List<SortConfig.TypeIdField>> typeIdFieldInfoList, List<String> texts, String typeId, Map<String, Object> docTitles, List<Image> copyImages, Boolean isStrict) {
-        for (List<SortConfig.TypeIdField> field : typeIdFieldInfoList) {
-            AtomicReference<Boolean> isMatch = new AtomicReference<>(false);
-            AtomicReference<Integer> documentPage = new AtomicReference<>(0);
-            AtomicReference<Integer> totalPages = new AtomicReference<>(0);
-            for (SortConfig.TypeIdField f : field) {
-                // TODO 如果是纠错分类 且method=="regular" 需要对ocr结果进行纠错再分类
-
-                Matcher matcher = MATCHERS.get(f.getMethod());
-                //严格分类&& 一组数据必须全部满足
-                if (isStrict && !matcher.match(f, texts)) {
-                    return;
-                }
-                isMatch.set(matcher.match(f, texts));
-                documentPage.set(f.getPage());
-                totalPages.set(f.getTotalPages());
-            }
-            if (isMatch.get()) {
-                if (!"0".equals(image.getDocumentLabel())) {
-                    Double matchThreshold = properties.getAlgorithm().getMatchThreshold();
-                    Optional.ofNullable(docTitles.get(image.getImageId())).ifPresent(title -> {
-                        // 如果又多个分类匹配是否更像标题 不知道这里为什么拿最后一个
-                        boolean isMatchTitle = field.get(field.size() - 1).getPattern().stream()
-                                .anyMatch(pattern ->
-                                        TextUtils.similarity(pattern, title.toString(), matchThreshold) > matchThreshold);
-                        if (isMatchTitle) {
-                            image.saveResult(image, typeId, documentPage.get(), totalPages.get());
-                        }
-                    });
-                } else {
-                    image.saveResult(image, typeId, documentPage.get(), totalPages.get());
-                }
-                //判断分类是否正确 如果是帮办数据判断是否与传入的类别一致  # 若自备，传入的有类别，且传入类别和程序分类结果不一致
-                copyImages.stream().filter(f -> f.getImageId().equals(image.getImageId())).findAny().ifPresent(img -> {
-                    if (img.getDocumentSource() == 0 && !"0".equals(img.getDocumentLabel()) && !typeId.equals(img.getDocumentLabel())) {
-                        logger.info("图片{}分类结果存在不一致：{}||{}  ", image.getImageId(), image.getDocumentLabel(), typeId);
-                        image.saveResult(image, "-1", 0, 0);
-                    } else if (img.getDocumentSource() == 0 && "0".equals(img.getDocumentLabel()) && typeId.equals(img.getDocumentLabel())) {
-                        image.saveResult(image, typeId, documentPage.get(), totalPages.get());
+            List<List<SortConfig.TypeIdField>> value = typeIdField.get(typeId);
+            for (List<SortConfig.TypeIdField> fields : value) {
+                boolean matched = false;
+                int page = 0;
+                int totalPage = 0;
+                for (SortConfig.TypeIdField field : fields) {
+                    // TODO 如果是纠错分类 且method=="regular" 需要对ocr结果进行纠错再分类
+                    Matcher matcher = MATCHERS.get(field.getMethod());
+                    // 严格分类，一组数据必须全部满足
+                    if (strict && !matcher.match(field, texts)) {
+                        return;
                     }
-                });
-                break;
+                    matched = matcher.match(field, texts);
+                    page = field.getPage();
+                    totalPage = field.getTotalPages();
+                }
+
+                if (matched) {
+                    if (!"0".equals(image.getDocumentLabel())) {
+                        String title = docTitles.get(image.getImageId());
+                        // 如果又多个分类匹配是否更像标题 不知道这里为什么拿最后一个
+                        if (StrUtil.isNotBlank(title) && fields.get(fields.size() - 1).getPattern().stream()
+                                .anyMatch(pattern -> TextUtils.similarity(pattern, title, threshold) > threshold)) {
+                            image.setDocumentLabel(typeId);
+                            image.setDocumentPage(page);
+                            image.setTotalPages(totalPage);
+                        }
+                    } else {
+                        image.setDocumentLabel(typeId);
+                        image.setDocumentPage(page);
+                        image.setTotalPages(totalPage);
+                    }
+
+                    //判断分类是否正确 如果是帮办数据判断是否与传入的类别一致  # 若自备，传入的有类别，且传入类别和程序分类结果不一致
+                    Image cpImg = copyImages.stream().filter(o -> o.getImageId().equals(image.getImageId())).findAny().orElse(null);
+                    if (cpImg != null) {
+                        if (cpImg.getDocumentSource() == 0 && !"0".equals(cpImg.getDocumentLabel()) && !typeId.equals(cpImg.getDocumentLabel())) {
+                            logger.info("图片{}分类结果存在不一致：origin={}, result={}", image.getImageId(), image.getDocumentLabel(), typeId);
+                            image.setDocumentLabel("-1");
+                            image.setDocumentPage(0);
+                            image.setTotalPages(0);
+                        } else if (cpImg.getDocumentSource() == 0 && "0".equals(cpImg.getDocumentLabel()) && typeId.equals(cpImg.getDocumentLabel())) {
+                            image.setDocumentLabel(typeId);
+                            image.setDocumentPage(page);
+                            image.setTotalPages(totalPage);
+                        }
+                    }
+
+                    break;
+                }
             }
         }
     }

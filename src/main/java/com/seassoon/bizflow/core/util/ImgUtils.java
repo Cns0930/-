@@ -2,6 +2,7 @@ package com.seassoon.bizflow.core.util;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.img.ImgUtil;
+import com.seassoon.bizflow.core.model.ocr.Shape;
 
 import java.awt.image.BufferedImage;
 import java.math.BigDecimal;
@@ -48,37 +49,4 @@ public class ImgUtils extends ImgUtil {
         }
     }
 
-    public static class Shape {
-        private Integer width;
-        private Integer height;
-
-        public Shape() {
-        }
-
-        public Shape(Integer width, Integer height) {
-            this.width = width;
-            this.height = height;
-        }
-
-        public Integer getWidth() {
-            return width;
-        }
-
-        public void setWidth(Integer width) {
-            this.width = width;
-        }
-
-        public Integer getHeight() {
-            return height;
-        }
-
-        public void setHeight(Integer height) {
-            this.height = height;
-        }
-
-        // static methods
-        public static Shape of(Integer width, Integer height) {
-            return new Shape(width, height);
-        }
-    }
 }

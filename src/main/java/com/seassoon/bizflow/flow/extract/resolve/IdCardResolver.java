@@ -12,8 +12,8 @@ import com.seassoon.bizflow.core.model.extra.Field;
 import com.seassoon.bizflow.core.model.idcard.IdCard;
 import com.seassoon.bizflow.core.model.idcard.IdCardResponse;
 import com.seassoon.bizflow.core.model.ocr.Image;
+import com.seassoon.bizflow.core.model.ocr.Shape;
 import com.seassoon.bizflow.core.util.ImgUtils;
-import com.seassoon.bizflow.support.BizFlowContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +21,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
-import java.awt.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 
@@ -72,7 +70,7 @@ public class IdCardResolver extends AbstractResolver {
         Content content = Content.of(image.getImageId(), extractPoint);
 
         // 计算截图区域并切图
-        ImgUtils.Shape shape = ImgUtils.getShape(strPath);
+        Shape shape = ImgUtils.getShape(strPath);
         List<List<Integer>> location = ImgUtils.calcLocation(shape, extractPoint.getInitPosition());
         Path snapshot = snapshot(image, location);
 
